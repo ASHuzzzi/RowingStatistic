@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">RowingStatistic</string>
+
+    <string name="load_file">Загрузить файл</string>
+    <string name="start_sampling">Начало выборки</string>
+    <string name="finish_sampling">Конец выборки</string>
+    <string name="process">Обработать</string>
+    <string name="save_file">Записать в файл</string>
+    <string name="sampll">Выборка:</string>
+    <string name="sampl">Выборка по</string>
+    <string name="time">Времени</string>
+    <string name="distance">Дистанции</string>
+
+    <string name="da_load_chart_name">Введите название графика</string>
+    <string name="result_filename">Введите имя файла</string>
+    <string name="da_cooment_result">Комментарий для периода</string>
+
+    <string name="chart_info">Построить график по:</string>
+    <string name="name_chart">Названия графиков</string>
+    <string name="name_chart1">График 1</string>
+    <string name="name_chart2">График 2</string>
+    <string name="name_chart3">График 3</string>
+    <string name="name_chart4">График 4</string>
+    <string name="name_chart5">График 5</string>
+    <string name="name_chart6">График 6</string>
+    <string name="name_chart7">График 7</string>
+    <string name="name_chart8">График 8</string>
+    <string name="build_chart">Построить график</string>
+    <string name="empty"> </string>
+
+    <string name="open">Открыть</string>
+
+</resources>

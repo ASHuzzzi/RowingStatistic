@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        для layout normal main
+    -->
+    <dimen name="width30">35dp</dimen>
+    <dimen name="txt_size_10">10sp</dimen>
+    <dimen name="txt_size_12">12sp</dimen>
+    <dimen name="txt_size_14">14sp</dimen>
+
+    <!--
+        для layout large
+    -->
+
+
+
+    <!--
+        для layout xlarge
+    -->
+    <dimen name="txt_size_16">16sp</dimen>
+    <dimen name="txt_size_18">18sp</dimen>
+
+    <!--
+        для layout small
+    -->
+    <dimen name="txt_size_5">5sp</dimen>
+    <dimen name="txt_size_6">6sp</dimen>
+    <dimen name="txt_size_7">7sp</dimen>
+
+</resources>
