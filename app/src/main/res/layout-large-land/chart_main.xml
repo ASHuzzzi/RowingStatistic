@@ -133,7 +133,7 @@
             android:orientation="vertical"
             tools:ignore="NestedWeights">
 
-            <ru.lizzzi.rowingstatistic.charts.charts.LineChart
+            <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/chartUp"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
@@ -146,7 +146,7 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <ru.lizzzi.rowingstatistic.charts.charts.LineChart
+            <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/chartDown"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />

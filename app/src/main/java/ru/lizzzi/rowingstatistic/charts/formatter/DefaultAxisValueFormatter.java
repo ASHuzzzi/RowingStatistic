@@ -2,12 +2,10 @@ package ru.lizzzi.rowingstatistic.charts.formatter;
 
 import java.text.DecimalFormat;
 
-import ru.lizzzi.rowingstatistic.charts.components.AxisBase;
-
 /**
  * Created by philipp on 02/06/16.
  */
-public class DefaultAxisValueFormatter implements IAxisValueFormatter
+public class DefaultAxisValueFormatter implements com.github.mikephil.charting.formatter.IAxisValueFormatter
 {
 
     /**
@@ -39,11 +37,6 @@ public class DefaultAxisValueFormatter implements IAxisValueFormatter
         mFormat = new DecimalFormat("###,###,###,##0" + b.toString());
     }
 
-    @Override
-    public String getFormattedValue(float value, AxisBase axis) {
-        // avoid memory allocations here (for performance)
-        return mFormat.format(value);
-    }
 
     /**
      * Returns the number of decimal digits this formatter uses or -1, if unspecified.
@@ -52,5 +45,10 @@ public class DefaultAxisValueFormatter implements IAxisValueFormatter
      */
     public int getDecimalDigits() {
         return digits;
+    }
+
+    @Override
+    public String getFormattedValue(float value, com.github.mikephil.charting.components.AxisBase axis) {
+        return mFormat.format(value);
     }
 }

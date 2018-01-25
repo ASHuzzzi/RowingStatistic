@@ -1,7 +1,5 @@
 package ru.lizzzi.rowingstatistic.charts.components;
 
-import ru.lizzzi.rowingstatistic.charts.formatter.IAxisValueFormatter;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -10,7 +8,7 @@ import java.util.TimeZone;
 /**
  * Created by Yasir on 02/06/16.
  */
-public class HourAxisValueFormatter implements IAxisValueFormatter
+public class HourAxisValueFormatter implements com.github.mikephil.charting.formatter.IAxisValueFormatter
 {
 
     private long referenceTimestamp; // minimum timestamp in your data set
@@ -35,7 +33,7 @@ public class HourAxisValueFormatter implements IAxisValueFormatter
      * @return
      */
     @Override
-    public String getFormattedValue(float value, AxisBase axis) {
+    public String getFormattedValue(float value, com.github.mikephil.charting.components.AxisBase axis) {
         // convertedTimestamp = originalTimestamp - referenceTimestamp
         long convertedTimestamp = (long) value;
 

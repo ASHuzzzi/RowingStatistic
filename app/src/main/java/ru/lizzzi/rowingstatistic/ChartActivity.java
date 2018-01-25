@@ -12,6 +12,7 @@ import android.graphics.Matrix;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,6 +21,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.DefaultAxisValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.listener.ChartTouchListener;
+import com.github.mikephil.charting.listener.OnChartGestureListener;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,26 +43,13 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import ru.lizzzi.rowingstatistic.charts.charts.LineChart;
 import ru.lizzzi.rowingstatistic.charts.components.HourAxisValueFormatter;
-import ru.lizzzi.rowingstatistic.charts.components.Legend;
-import ru.lizzzi.rowingstatistic.charts.data.Entry;
-import ru.lizzzi.rowingstatistic.charts.data.LineData;
-import ru.lizzzi.rowingstatistic.charts.data.LineDataSet;
-import ru.lizzzi.rowingstatistic.charts.formatter.DefaultAxisValueFormatter;
-import ru.lizzzi.rowingstatistic.charts.highlight.Highlight;
-import ru.lizzzi.rowingstatistic.charts.interfaces.datasets.ILineDataSet;
-import ru.lizzzi.rowingstatistic.charts.listener.ChartTouchListener;
-import ru.lizzzi.rowingstatistic.charts.listener.OnChartGestureListener;
-import ru.lizzzi.rowingstatistic.charts.listener.OnChartValueSelectedListener;
-import ru.lizzzi.rowingstatistic.charts.notimportant.DemoBase;
 import ru.lizzzi.rowingstatistic.charts.utils.ColorTemplate;
-
 import ru.lizzzi.rowingstatistic.db.data.RowerContract;
-import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
 import ru.lizzzi.rowingstatistic.db.data.RowerContract.RowerData;
+import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
 
-public class ChartActivity extends DemoBase implements OnChartValueSelectedListener {
+public class ChartActivity extends FragmentActivity implements OnChartValueSelectedListener {
 
     //файл с полями для запоминания последней открытой папки
     public static final String APP_PREFERENCES = "lastdir";
@@ -79,8 +79,8 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     private SharedPreferences mCharts;
 
     //графики и массивы для них
-    private LineChart mChartUp;
     private LineChart mChartDown;
+    private LineChart mChartUp;
     ArrayList<ILineDataSet> dataSetsUp = new ArrayList<ILineDataSet>();
     ArrayList<ILineDataSet> dataSetsDown = new ArrayList<ILineDataSet>();
 
@@ -243,6 +243,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                         LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
                         LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");
 
+
                         d_up.setLineWidth(3.5f);
                         d_up.setCircleRadius(1f);
 
@@ -281,6 +282,17 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                     } else {
                         //здесь все аналогично выше
                         ram_begin = (float) tap_point;
+                        /*
+                        ArrayList<Entry> values_up = new ArrayList<Entry>();
+                        ArrayList<Entry> values_down = new ArrayList<Entry>();
+                        values_up.add(new Entry(ram_begin, 0));
+                        values_up.add(new Entry(ram_begin, 1));
+
+                        values_down.add(new Entry(ram_begin, 0));
+                        values_down.add(new Entry(ram_begin, 1));
+                        LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
+                        LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");*/
+
                         ArrayList<Entry> values_up = new ArrayList<Entry>();
                         ArrayList<Entry> values_down = new ArrayList<Entry>();
                         values_up.add(new Entry(ram_begin, 0));
@@ -348,6 +360,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                         Toast.makeText(getApplicationContext(), "Конец периода не может быть меньше начала", Toast.LENGTH_LONG).show();
                     } else {
                         ram_end = (float) tap_point;
+                        /*
                         ArrayList<Entry> values_up = new ArrayList<Entry>();
                         ArrayList<Entry> values_down = new ArrayList<Entry>();
                         values_up.add(new Entry(ram_end, 0));
@@ -356,7 +369,17 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                         values_down.add(new Entry(ram_end, 0));
                         values_down.add(new Entry(ram_end, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Конец выборки");
-                        LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");
+                        LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");*/
+
+                        ArrayList<Entry> values_up = new ArrayList<Entry>();
+                        ArrayList<Entry> values_down = new ArrayList<Entry>();
+                        values_up.add(new Entry(ram_begin, 0));
+                        values_up.add(new Entry(ram_begin, 1));
+
+                        values_down.add(new Entry(ram_begin, 0));
+                        values_down.add(new Entry(ram_begin, 1));
+                        LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
+                        LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");
 
                         d_up.setLineWidth(3.5f);
                         d_up.setCircleRadius(1f);
@@ -394,6 +417,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                         Toast.makeText(getApplicationContext(), "Конец периода не может быть меньше начала", Toast.LENGTH_LONG).show();
                     } else {
                         ram_end = (float) tap_point;
+                        /*
                         ArrayList<Entry> values_up = new ArrayList<Entry>();
                         ArrayList<Entry> values_down = new ArrayList<Entry>();
                         values_up.add(new Entry(ram_end, 0));
@@ -402,7 +426,17 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                         values_down.add(new Entry(ram_end, 0));
                         values_down.add(new Entry(ram_end, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Конец выборки");
-                        LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");
+                        LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");*/
+
+                        ArrayList<Entry> values_up = new ArrayList<com.github.mikephil.charting.data.Entry>();
+                        ArrayList<Entry> values_down = new ArrayList<com.github.mikephil.charting.data.Entry>();
+                        values_up.add(new Entry(ram_begin, 0));
+                        values_up.add(new Entry(ram_begin, 1));
+
+                        values_down.add(new Entry(ram_begin, 0));
+                        values_down.add(new Entry(ram_begin, 1));
+                        LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
+                        LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");
 
                         d_up.setLineWidth(3.5f);
                         d_up.setCircleRadius(1f);
@@ -857,9 +891,9 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                     power = cursor.getInt(cursor.getColumnIndex(RowerData.COLUMN_POWER));
                     float ppower = ((float) power / (float) max_power);
                     if (timeF_distanceT == 0) {
-                        rower_AL.add(new Entry(time, ppower));
+                        rower_AL.add(new com.github.mikephil.charting.data.Entry(time, ppower));
                     } else {
-                        rower_AL.add(new Entry(distance, ppower));
+                        rower_AL.add(new com.github.mikephil.charting.data.Entry(distance, ppower));
                     }
 
                     if (z == 0) {
@@ -868,11 +902,11 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                         stroke_rate = cursor.getInt(cursor.getColumnIndex(RowerData.COLUMN_STROKE_RATE));
                         float sstroke_rate = ((float) stroke_rate / max_stroke_rate);
                         if (timeF_distanceT == 0) {
-                            speed_AL.add(new Entry(time, sspeed));
-                            stroke_rate_AL.add(new Entry(time, sstroke_rate));
+                            speed_AL.add(new com.github.mikephil.charting.data.Entry(time, sspeed));
+                            stroke_rate_AL.add(new com.github.mikephil.charting.data.Entry(time, sstroke_rate));
                         } else {
-                            speed_AL.add(new Entry(distance, sspeed));
-                            stroke_rate_AL.add(new Entry(distance, sstroke_rate));
+                            speed_AL.add(new com.github.mikephil.charting.data.Entry(distance, sspeed));
+                            stroke_rate_AL.add(new com.github.mikephil.charting.data.Entry(distance, sstroke_rate));
                         }
 
                     }
@@ -931,9 +965,9 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         mChartUp.getXAxis().setDrawAxisLine(false);
         mChartUp.getXAxis().setDrawGridLines(false);
         if (timeF_distanceT == 0) {
-            mChartUp.getXAxis().setValueFormatter(new HourAxisValueFormatter(0));
+            mChartUp.getXAxis().setValueFormatter( new  HourAxisValueFormatter(0));
         } else {
-            mChartUp.getXAxis().setValueFormatter(new DefaultAxisValueFormatter(0));
+            mChartUp.getXAxis().setValueFormatter( new DefaultAxisValueFormatter(0));
         }
 
         mChartUp.setOnChartValueSelectedListener(new OnChartValueSelectedListener() { //слушатель клика по графку
@@ -950,6 +984,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         });
 
         mChartUp.setOnChartGestureListener(new OnChartGestureListener() {
+
             @Override
             public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
 
@@ -1029,6 +1064,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         }
 
         mChartDown.setOnChartValueSelectedListener(new OnChartValueSelectedListener() { //слушатель клика по графку
+
             @Override
             public void onValueSelected(Entry e, Highlight h) {
                 tap_point = e.getX();

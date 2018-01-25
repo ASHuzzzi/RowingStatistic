@@ -8,7 +8,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.lizzzi.rowingstatistic.charts.formatter.DefaultAxisValueFormatter;
 import ru.lizzzi.rowingstatistic.charts.formatter.IAxisValueFormatter;
 import ru.lizzzi.rowingstatistic.charts.utils.Utils;
 
@@ -482,11 +481,11 @@ public abstract class AxisBase extends ComponentBase {
      * @param f
      */
     public void setValueFormatter(IAxisValueFormatter f) {
-
+/*
         if (f == null)
-            mAxisValueFormatter = new DefaultAxisValueFormatter(mDecimals);
+            //mAxisValueFormatter = new DefaultAxisValueFormatter(mDecimals);
         else
-            mAxisValueFormatter = f;
+            mAxisValueFormatter = f;*/
     }
 
     /**
@@ -495,12 +494,12 @@ public abstract class AxisBase extends ComponentBase {
      * @return
      */
     public IAxisValueFormatter getValueFormatter() {
-
+/*
         if (mAxisValueFormatter == null ||
                 (mAxisValueFormatter instanceof DefaultAxisValueFormatter &&
                         ((DefaultAxisValueFormatter)mAxisValueFormatter).getDecimalDigits() != mDecimals))
             mAxisValueFormatter = new DefaultAxisValueFormatter(mDecimals);
-
+*/
         return mAxisValueFormatter;
     }
 

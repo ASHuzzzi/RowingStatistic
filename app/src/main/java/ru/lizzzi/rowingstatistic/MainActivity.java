@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String APP_PREFERENCES_CHART_DISTATNCE_MIN = "distatncemin";
     private SharedPreferences mCharts;
 
-    //перепенные для записи в БД
+    //переменные для записи в БД
     private int id;
     private double distance ;
     private long time;
@@ -174,12 +174,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void OnOpenFileClick(View view) { //открытие файла
 
-       /* */
-
-
-        mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-
-
+        //mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
 
         if (countOpenFiles < 8){ //проверка на макисмальное количество файлов
             final OpenFileDialog fileDialog = new OpenFileDialog(this)
@@ -204,8 +199,6 @@ public class MainActivity extends AppCompatActivity {
         }else {
             Toast.makeText(getApplicationContext(), "Загружено максимальное количество файлов!", Toast.LENGTH_LONG).show();
         }
-
-
     }
     public void OnClick_Time(View view){ //меняет настройку отображения графика с дистанции на время
         mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
@@ -318,6 +311,7 @@ public class MainActivity extends AppCompatActivity {
 
             }else {
                 Toast.makeText(getApplicationContext(), "Не у всех графиков есть название!", Toast.LENGTH_LONG).show();
+                editor.clear();
             }
         }
     }
