@@ -1,6 +1,7 @@
 package ru.lizzzi.rowingstatistic;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -24,6 +26,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
@@ -176,17 +179,10 @@ public class MainActivity extends AppCompatActivity {
 
         mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
 
-        final LinearLayout LL_Chart1 = (LinearLayout)findViewById(R.id.LL_Chart1);
-        final LinearLayout LL_Chart2 = (LinearLayout)findViewById(R.id.LL_Chart2);
-        final LinearLayout LL_Chart3 = (LinearLayout)findViewById(R.id.LL_Chart3);
-        final LinearLayout LL_Chart4 = (LinearLayout)findViewById(R.id.LL_Chart4);
-        final LinearLayout LL_Chart5 = (LinearLayout)findViewById(R.id.LL_Chart5);
-        final LinearLayout LL_Chart6 = (LinearLayout)findViewById(R.id.LL_Chart6);
-        final LinearLayout LL_Chart7 = (LinearLayout)findViewById(R.id.LL_Chart7);
-        final LinearLayout LL_Chart8 = (LinearLayout)findViewById(R.id.LL_Chart8);
+
 
         if (countOpenFiles < 8){ //проверка на макисмальное количество файлов
-            OpenFileDialog fileDialog = new OpenFileDialog(this)
+            final OpenFileDialog fileDialog = new OpenFileDialog(this)
                     .setFilter(".*\\.csv")
                     .setOpenDialogListener(new OpenFileDialog.OpenDialogListener() {
 
@@ -199,121 +195,8 @@ public class MainActivity extends AppCompatActivity {
                             }else {
                                 chek_load_file_again2 = fileName;
 
-                                BufferedReader reader = new BufferedReader(new FileReader(fileName));
-
-                                // считываем построчно
-                                String line = null;
-                                String timeStart = null;
-                                Scanner scanner = null;
-                                boolean flag = false;
-                                int index = 0;
-                                int row = 0;
-                                while ((line = reader.readLine()) != null) {
-                                    scanner = new Scanner(line);
-                                    scanner.useDelimiter(",");
-                                    while (scanner.hasNext()) {
-                                        String data = scanner.next();
-                                        id = countOpenFiles;
-                                        if (row == 3){ //в этой строке берем время начала тренировки
-                                            if (index == 1){
-                                                distance = 0;
-                                         /*
-                                        Берем время начала тренировки. Ниже берем именно время, отрезая дату
-                                         */
-                                                timeStart = (data.substring(9));
-                                                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-                                                timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-                                                Date dateStart = timeFormat.parse(timeStart);
-                                                time = dateStart.getTime();
-                                                speed = 0;
-                                                stroke_rate = 0;
-                                                power = 0;
-                                            }
-                                        }
-                                        if (row > 29){ //начало массива данных тренировки
-                                            if (index == 1){
-                                                if (!"---".equals(data)){
-                                                    distance = Double.parseDouble(data);
-                                                }else {
-                                                    flag = true;
-                                                }
-                                            }else if (index == 3){
-                                                if (!"---".equals(data)){
-                                                    SimpleDateFormat timeFormat1 = new SimpleDateFormat("HH:mm");
-                                                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.S");
-                                                    timeFormat1.setTimeZone(TimeZone.getTimeZone("UTC"));
-                                                    timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-                                                    Date date1 = timeFormat1.parse(timeStart);
-                                                    Date date2 = timeFormat.parse(data);
-                                                    time = date1.getTime() + date2.getTime();
-                                                }else {
-                                                    flag = true;
-                                                }
-
-                                            }else if (index == 5){
-                                                if (!"---".equals(data)){
-                                                    speed = Double.parseDouble(data);
-                                                }else {
-                                                    flag = true;
-                                                }
-                                            }else if (index == 8){
-                                                if (!"---".equals(data)){
-                                                    stroke_rate = Integer.parseInt(data);
-                                                }else {
-                                                    flag = true;
-                                                }
-                                            }else  if (index == 13){
-                                                if (!"---".equals(data)){
-                                                    power = Integer.parseInt(data);
-                                                }else {
-                                                    flag = true;
-                                                }
-                                            }
-
-                                    /*
-                                    Загружаем массив данных, на случай чего его можно расширить, дописав необходыме индексы
-                                    в этот метод, а так же дополнив БД полями
-                                     */
-                                        }
-                                        index++;
-                                    }
-
-                                    index = 0;
-                                    if (row == 3 || (row > 29 & flag == false)){
-                                        WriteDB(id, distance, time, speed, stroke_rate, power); //пишем в БД строку
-                                    }
-                                    row++;
-                                    flag = false;
-                                }
-                                //закрываем наш ридер
-                                reader.close();
-                                countOpenFiles++;
-
-                                if (countOpenFiles >0){
-                                    LL_Chart1.setVisibility(View.VISIBLE);
-                                }
-                                if (countOpenFiles >1){
-                                    LL_Chart2.setVisibility(View.VISIBLE);
-                                }
-                                if (countOpenFiles >2){
-                                    LL_Chart3.setVisibility(View.VISIBLE);
-                                }
-                                if (countOpenFiles >3){
-                                    LL_Chart4.setVisibility(View.VISIBLE);
-                                }
-                                if (countOpenFiles >4){
-                                    LL_Chart5.setVisibility(View.VISIBLE);
-                                }
-                                if (countOpenFiles >5){
-                                    LL_Chart6.setVisibility(View.VISIBLE);
-                                }
-                                if (countOpenFiles >6){
-                                    LL_Chart7.setVisibility(View.VISIBLE);
-                                }
-                                if (countOpenFiles >7){
-                                    LL_Chart8.setVisibility(View.VISIBLE);
-                                }
+                                LoadData catTask = new LoadData();
+                                catTask.execute(fileName);
                             }
                         }
                     });
@@ -321,6 +204,8 @@ public class MainActivity extends AppCompatActivity {
         }else {
             Toast.makeText(getApplicationContext(), "Загружено максимальное количество файлов!", Toast.LENGTH_LONG).show();
         }
+
+
     }
     public void OnClick_Time(View view){ //меняет настройку отображения графика с дистанции на время
         mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
@@ -622,6 +507,174 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent datas){ //использем этот метод чтобы закрыть активность после возврата с предыдущей
         if (requestCode == 1234){
             finish();
+        }
+    }
+
+    class LoadData extends AsyncTask<String, Void, Void> {
+
+        ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
+
+        @Override
+        protected void onPreExecute(){
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            mProgressDialog.setMessage("Загружаю. Подождите...");
+            mProgressDialog.show();
+        }
+
+
+        @Override
+        protected Void doInBackground(String... urls) {
+
+            BufferedReader reader = null;
+            String filName = String.valueOf(urls[0]) ;
+            try {
+                reader = new BufferedReader(new FileReader(filName));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            // считываем построчно
+            String line = null;
+            String timeStart = null;
+            Scanner scanner = null;
+            boolean flag = false;
+            int index = 0;
+            int row = 0;
+            try {
+                while ((line = reader.readLine()) != null) {
+                    scanner = new Scanner(line);
+                    scanner.useDelimiter(",");
+                    while (scanner.hasNext()) {
+                        String data = scanner.next();
+                        id = countOpenFiles;
+                        if (row == 3){ //в этой строке берем время начала тренировки
+                            if (index == 1){
+                                distance = 0;
+                                             /*
+                                            Берем время начала тренировки. Ниже берем именно время, отрезая дату
+                                             */
+                                timeStart = (data.substring(9));
+                                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+                                timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+                                Date dateStart = timeFormat.parse(timeStart);
+                                time = dateStart.getTime();
+                                speed = 0;
+                                stroke_rate = 0;
+                                power = 0;
+                            }
+                        }
+                        if (row > 29){ //начало массива данных тренировки
+                            if (index == 1){
+                                if (!"---".equals(data)){
+                                    distance = Double.parseDouble(data);
+                                }else {
+                                    flag = true;
+                                }
+                            }else if (index == 3){
+                                if (!"---".equals(data)){
+                                    SimpleDateFormat timeFormat1 = new SimpleDateFormat("HH:mm");
+                                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.S");
+                                    timeFormat1.setTimeZone(TimeZone.getTimeZone("UTC"));
+                                    timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+                                    Date date1 = timeFormat1.parse(timeStart);
+                                    Date date2 = timeFormat.parse(data);
+                                    time = date1.getTime() + date2.getTime();
+                                }else {
+                                    flag = true;
+                                }
+
+                            }else if (index == 5){
+                                if (!"---".equals(data)){
+                                    speed = Double.parseDouble(data);
+                                }else {
+                                    flag = true;
+                                }
+                            }else if (index == 8){
+                                if (!"---".equals(data)){
+                                    stroke_rate = Integer.parseInt(data);
+                                }else {
+                                    flag = true;
+                                }
+                            }else  if (index == 13){
+                                if (!"---".equals(data)){
+                                    power = Integer.parseInt(data);
+                                }else {
+                                    flag = true;
+                                }
+                            }
+
+                                        /*
+                                        Загружаем массив данных, на случай чего его можно расширить, дописав необходыме индексы
+                                        в этот метод, а так же дополнив БД полями
+                                         */
+                        }
+                        index++;
+                    }
+
+                    index = 0;
+                    if (row == 3 || (row > 29 & flag == false)){
+                        WriteDB(id, distance, time, speed, stroke_rate, power); //пишем в БД строку
+                    }
+                    row++;
+                    flag = false;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            //закрываем наш ридер
+            try {
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+
+            final LinearLayout LL_Chart1 = (LinearLayout)findViewById(R.id.LL_Chart1);
+            final LinearLayout LL_Chart2 = (LinearLayout)findViewById(R.id.LL_Chart2);
+            final LinearLayout LL_Chart3 = (LinearLayout)findViewById(R.id.LL_Chart3);
+            final LinearLayout LL_Chart4 = (LinearLayout)findViewById(R.id.LL_Chart4);
+            final LinearLayout LL_Chart5 = (LinearLayout)findViewById(R.id.LL_Chart5);
+            final LinearLayout LL_Chart6 = (LinearLayout)findViewById(R.id.LL_Chart6);
+            final LinearLayout LL_Chart7 = (LinearLayout)findViewById(R.id.LL_Chart7);
+            final LinearLayout LL_Chart8 = (LinearLayout)findViewById(R.id.LL_Chart8);
+
+            countOpenFiles++;
+
+            if (countOpenFiles >0){
+                LL_Chart1.setVisibility(View.VISIBLE);
+            }
+            if (countOpenFiles >1){
+                LL_Chart2.setVisibility(View.VISIBLE);
+            }
+            if (countOpenFiles >2){
+                LL_Chart3.setVisibility(View.VISIBLE);
+            }
+            if (countOpenFiles >3){
+                LL_Chart4.setVisibility(View.VISIBLE);
+            }
+            if (countOpenFiles >4){
+                LL_Chart5.setVisibility(View.VISIBLE);
+            }
+            if (countOpenFiles >5){
+                LL_Chart6.setVisibility(View.VISIBLE);
+            }
+            if (countOpenFiles >6){
+                LL_Chart7.setVisibility(View.VISIBLE);
+            }
+            if (countOpenFiles >7){
+                LL_Chart8.setVisibility(View.VISIBLE);
+            }
+            mProgressDialog.hide();
+            Toast.makeText(getApplicationContext(), "Файл загружен", Toast.LENGTH_LONG).show();
         }
     }
 }
