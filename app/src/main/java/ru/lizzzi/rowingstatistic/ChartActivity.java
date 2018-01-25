@@ -373,11 +373,11 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
                         ArrayList<Entry> values_up = new ArrayList<Entry>();
                         ArrayList<Entry> values_down = new ArrayList<Entry>();
-                        values_up.add(new Entry(ram_begin, 0));
-                        values_up.add(new Entry(ram_begin, 1));
+                        values_up.add(new Entry(ram_end, 0));
+                        values_up.add(new Entry(ram_end, 1));
 
-                        values_down.add(new Entry(ram_begin, 0));
-                        values_down.add(new Entry(ram_begin, 1));
+                        values_down.add(new Entry(ram_end, 0));
+                        values_down.add(new Entry(ram_end, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
                         LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");
 
@@ -430,11 +430,11 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
                         ArrayList<Entry> values_up = new ArrayList<com.github.mikephil.charting.data.Entry>();
                         ArrayList<Entry> values_down = new ArrayList<com.github.mikephil.charting.data.Entry>();
-                        values_up.add(new Entry(ram_begin, 0));
-                        values_up.add(new Entry(ram_begin, 1));
+                        values_up.add(new Entry(ram_end, 0));
+                        values_up.add(new Entry(ram_end, 1));
 
-                        values_down.add(new Entry(ram_begin, 0));
-                        values_down.add(new Entry(ram_begin, 1));
+                        values_down.add(new Entry(ram_end, 0));
+                        values_down.add(new Entry(ram_end, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
                         LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");
 
