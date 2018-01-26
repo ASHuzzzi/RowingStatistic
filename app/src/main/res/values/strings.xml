@@ -30,4 +30,6 @@
 
     <string name="open">Открыть</string>
 
+    <string name="load_data">Загружаю. Подождите...</string>
+
 </resources>

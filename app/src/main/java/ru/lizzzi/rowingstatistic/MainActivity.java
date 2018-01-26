@@ -76,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
 
     private int countOpenFiles = 0; //переменная для подсчета кол-ва открытых файлов
     //private Date dateStart;
-    String chek_load_file_again = new String(); //переменная для проверки повторной загрузки файла
-    String chek_load_file_again2 = new String(); //переменная для проверки повторной загрузки файла
+    String chek_load_file_again; //переменная для проверки повторной загрузки файла
+    String chek_load_file_again2;//переменная для проверки повторной загрузки файла
     private int timeF_distanceT =  1; //отображение по х времени иди дистаниции. 0 и 1 соотвественно
     int textsize = 12;
 
@@ -143,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
 
                 }
-                return;
             }
         }
     }
@@ -307,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
                 showDB(); //получаем границы для графиков
 
                 Intent intent = new Intent(MainActivity.this, ChartActivity.class);
-                startActivityForResult(intent, 1234);
+                startActivity(intent);
 
             }else {
                 Toast.makeText(getApplicationContext(), "Не у всех графиков есть название!", Toast.LENGTH_LONG).show();
@@ -341,7 +340,7 @@ public class MainActivity extends AppCompatActivity {
 
         RowerDBHelper mDBHelper = new RowerDBHelper(this);
         SQLiteDatabase db = mDBHelper.getReadableDatabase();
-        Cursor cursor = null;
+        Cursor cursor;
 
         String[] max_speed_db = {
                 "MAX(" + RowerData.COLUMN_SPEED + ")",
@@ -497,13 +496,6 @@ public class MainActivity extends AppCompatActivity {
         button.setTextSize(textsize);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent datas){ //использем этот метод чтобы закрыть активность после возврата с предыдущей
-        if (requestCode == 1234){
-            finish();
-        }
-    }
-
     class LoadData extends AsyncTask<String, Void, Void> {
 
         ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
@@ -511,7 +503,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute(){
             mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            mProgressDialog.setMessage("Загружаю. Подождите...");
+            mProgressDialog.setMessage(getString(R.string.load_data));
             mProgressDialog.show();
         }
 
@@ -607,7 +599,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     index = 0;
-                    if (row == 3 || (row > 29 & flag == false)){
+                    if (row == 3 || (row > 29 & !flag )){
                         WriteDB(id, distance, time, speed, stroke_rate, power); //пишем в БД строку
                     }
                     row++;

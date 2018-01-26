@@ -3,7 +3,6 @@ package ru.lizzzi.rowingstatistic;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -43,11 +42,13 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import ru.lizzzi.rowingstatistic.charts.components.HourAxisValueFormatter;
-import ru.lizzzi.rowingstatistic.charts.utils.ColorTemplate;
+import ru.lizzzi.rowingstatistic.chart.ChartColor;
+import ru.lizzzi.rowingstatistic.chart.HourAxisValueFormatter;
 import ru.lizzzi.rowingstatistic.db.data.RowerContract;
 import ru.lizzzi.rowingstatistic.db.data.RowerContract.RowerData;
 import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
+
+
 
 public class ChartActivity extends FragmentActivity implements OnChartValueSelectedListener {
 
@@ -200,15 +201,6 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
         db.delete(RowerData.TABLE_NAME, null, null);
         db.close();
         mDBHelper.close();
-
-        Intent answerIntent = new Intent();
-
-        Bundle bundle = new Bundle();
-        bundle.putBoolean("need_finish", true);
-
-        answerIntent.putExtras(bundle);
-        setResult(RESULT_CANCELED, answerIntent);
-
     }
 
 
@@ -962,10 +954,11 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
         mChartUp.getAxisLeft().setEnabled(true);
         mChartUp.getAxisRight().setDrawAxisLine(false);
         mChartUp.getAxisRight().setDrawGridLines(false);
-        mChartUp.getXAxis().setDrawAxisLine(false);
-        mChartUp.getXAxis().setDrawGridLines(false);
+        //mChartUp.getXAxis().setEnabled(false);
+        //mChartUp.getXAxis().setDrawAxisLine(false);
+        //mChartUp.getXAxis().setDrawGridLines(false);
         if (timeF_distanceT == 0) {
-            mChartUp.getXAxis().setValueFormatter( new  HourAxisValueFormatter(0));
+            mChartUp.getXAxis().setValueFormatter( new HourAxisValueFormatter(0));
         } else {
             mChartUp.getXAxis().setValueFormatter( new DefaultAxisValueFormatter(0));
         }
@@ -982,6 +975,7 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
             }
         });
+
 
         mChartUp.setOnChartGestureListener(new OnChartGestureListener() {
 
@@ -1055,8 +1049,8 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
         mChartDown.getAxisLeft().setEnabled(true);
         mChartDown.getAxisRight().setDrawAxisLine(false);
         mChartDown.getAxisRight().setDrawGridLines(false);
-        mChartDown.getXAxis().setDrawAxisLine(false);
-        mChartDown.getXAxis().setDrawGridLines(false);
+        //mChartDown.getXAxis().setDrawAxisLine(false);
+        //mChartDown.getXAxis().setDrawGridLines(false);
         if (timeF_distanceT == 0) {
             mChartDown.getXAxis().setValueFormatter(new HourAxisValueFormatter(0));
         } else {
@@ -1140,21 +1134,21 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
     }
 
     private int[] mColors1 = new int[]{ //цвета для графиков
-            ColorTemplate.VORDIPLOM_COLORS[0],
-            ColorTemplate.VORDIPLOM_COLORS[1],
-            ColorTemplate.VORDIPLOM_COLORS[2],
-            ColorTemplate.VORDIPLOM_COLORS[3],
-            ColorTemplate.VORDIPLOM_COLORS[4],
-            ColorTemplate.VORDIPLOM_COLORS[5],
-            ColorTemplate.VORDIPLOM_COLORS[6],
-            ColorTemplate.VORDIPLOM_COLORS[7],
-            ColorTemplate.VORDIPLOM_COLORS[8],
-            ColorTemplate.VORDIPLOM_COLORS[9]
+            ChartColor.CHARTLINE_COLORS[0],
+            ChartColor.CHARTLINE_COLORS[1],
+            ChartColor.CHARTLINE_COLORS[2],
+            ChartColor.CHARTLINE_COLORS[3],
+            ChartColor.CHARTLINE_COLORS[4],
+            ChartColor.CHARTLINE_COLORS[5],
+            ChartColor.CHARTLINE_COLORS[6],
+            ChartColor.CHARTLINE_COLORS[7],
+            ChartColor.CHARTLINE_COLORS[8],
+            ChartColor.CHARTLINE_COLORS[9]
     };
 
     private int[] mColors2 = new int[]{
-            ColorTemplate.COLORFUL_COLORS[0],
-            ColorTemplate.COLORFUL_COLORS[1]
+            ChartColor.CHARTBORDER_COLORS[0],
+            ChartColor.CHARTBORDER_COLORS[1]
     };
 
     private void sample_show() { //метод для отображения времени и дистанции по клику или при фиксировании выборки

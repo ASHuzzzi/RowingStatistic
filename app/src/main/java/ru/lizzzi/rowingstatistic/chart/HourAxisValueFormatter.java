@@ -1,17 +1,17 @@
-package ru.lizzzi.rowingstatistic.charts.formatter;
+package ru.lizzzi.rowingstatistic.chart;
 
-import ru.lizzzi.rowingstatistic.charts.components.AxisBase;
-//import ru.lizzzi.rowingstatistic.charts.formatter.AxisValueFormatter;
-import ru.lizzzi.rowingstatistic.charts.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Created by Yasir on 02/06/16.
  */
+
 public class HourAxisValueFormatter implements IAxisValueFormatter
 {
 
@@ -21,7 +21,8 @@ public class HourAxisValueFormatter implements IAxisValueFormatter
 
     public HourAxisValueFormatter(long referenceTimestamp) {
         this.referenceTimestamp = referenceTimestamp;
-        this.mDataFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
+        this.mDataFormat = new SimpleDateFormat("HH:mm:ss");
+        this.mDataFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         this.mDate = new Date();
     }
 
@@ -47,14 +48,9 @@ public class HourAxisValueFormatter implements IAxisValueFormatter
         return getHour(originalTimestamp);
     }
 
-    /*@Override
-    public int getDecimalDigits() {
-        return 0;
-    }*/
-
     private String getHour(long timestamp){
         try{
-            mDate.setTime(timestamp*1000);
+            mDate.setTime(timestamp);
             return mDataFormat.format(mDate);
         }
         catch(Exception ex){
