@@ -1,5 +1,7 @@
 package ru.lizzzi.rowingstatistic.chart;
 
+import android.annotation.SuppressLint;
+
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 
@@ -8,9 +10,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-/**
- * Created by Yasir on 02/06/16.
- */
 
 public class HourAxisValueFormatter implements IAxisValueFormatter
 {
@@ -19,6 +18,7 @@ public class HourAxisValueFormatter implements IAxisValueFormatter
     private DateFormat mDataFormat;
     private Date mDate;
 
+    @SuppressLint("SimpleDateFormat")
     public HourAxisValueFormatter(long referenceTimestamp) {
         this.referenceTimestamp = referenceTimestamp;
         this.mDataFormat = new SimpleDateFormat("HH:mm:ss");
@@ -34,7 +34,7 @@ public class HourAxisValueFormatter implements IAxisValueFormatter
      *
      * @param value the value to be formatted
      * @param axis  the axis the value belongs to
-     * @return
+     * @ return
      */
     @Override
     public String getFormattedValue(float value, AxisBase axis) {

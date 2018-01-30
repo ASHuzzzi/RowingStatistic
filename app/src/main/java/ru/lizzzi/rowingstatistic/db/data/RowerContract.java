@@ -10,7 +10,7 @@ public class RowerContract {
     public static final class RowerData implements BaseColumns{
         public final static String TABLE_NAME = "rower";
 
-        public final static String _ID = BaseColumns._ID;
+        final static String _ID = BaseColumns._ID;
         public final static String COLUMN_ROWER = "id";
         public final static String COLUMN_DISTANCE = "distance";
         public final static String COLUMN_TIME = "time";

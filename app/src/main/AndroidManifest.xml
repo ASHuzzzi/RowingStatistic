@@ -27,6 +27,11 @@
             android:name=".ChartActivity"
             android:screenOrientation="landscape">
         </activity>
+
+        <activity
+            android:name=".SplashActivity">
+        </activity>
+
     </application>
 
 </manifest>

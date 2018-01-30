@@ -1,5 +1,6 @@
 package ru.lizzzi.rowingstatistic;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -9,6 +10,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Display;
@@ -42,30 +44,26 @@ import java.util.List;
 public class OpenFileDialog extends AlertDialog.Builder { //вспомогательный класс для создания и работы File Dialog
 
     private String currentPath = Environment.getExternalStorageDirectory().getPath();
-    private List<File> files = new ArrayList<File>();
+    private List<File> files = new ArrayList<>();
     private TextView title;
     private ListView listView;
     private FilenameFilter filenameFilter;
     private int selectedIndex = -1;
     private OpenDialogListener listener;
-    private Drawable folderIcon;
-    private Drawable fileIcon;
-    private String accessDeniedMessage;
     private boolean isOnlyFoldersFilter;
-    private String dire;
-    public static final String APP_PREFERENCES = "lastdir";
-    public static final String APP_PREFERENCES_COUNTER = "counter";
-    public static final String APP_PREFERENCES_DIR = "dir";
+    private static final String APP_PREFERENCES = "lastdir";
+    private static final String APP_PREFERENCES_COUNTER = "counter";
+    private static final String APP_PREFERENCES_DIR = "dir";
     private SharedPreferences mSettings;
 
 
     public interface OpenDialogListener {
-        public void OnSelectedFile(String fileName, String file) throws IOException, ParseException;
+        void OnSelectedFile(String fileName, String file) throws IOException, ParseException;
     }
 
     private class FileAdapter extends ArrayAdapter<File> {
 
-        public FileAdapter(Context context, List<File> files) {
+        FileAdapter(Context context, List<File> files) {
             super(context, android.R.layout.simple_list_item_1, files);
 
             mSettings = this.getContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
@@ -73,40 +71,25 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
 
 
 
+        @NonNull
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             TextView view = (TextView) super.getView(position, convertView, parent);
             File file = getItem(position);
-            if (view != null) {
-                view.setText(file.getName());
-                if (file.isDirectory()) {
-                    setDrawable(view, folderIcon);
-                } else {
-                    setDrawable(view, fileIcon);
-                    if (selectedIndex == position)
-                        //view.setBackgroundColor(getContext().getResources().getColor(android.R.color.holo_blue_dark));
-                        view.setBackgroundColor(getContext().getResources().getColor(R.color.colorAccent));
-                    else
-                        view.setBackgroundColor(getContext().getResources().getColor(android.R.color.transparent));
-                }
+            view.setText(file != null ? file.getName() : null);
+            if (file == null) {
+                if (selectedIndex == position)
+                    view.setBackgroundColor(getContext().getResources().getColor(R.color.colorAccent));
+                else
+                    view.setBackgroundColor(getContext().getResources().getColor(android.R.color.transparent));
             }
             return view;
         }
 
-        private void setDrawable(TextView view, Drawable drawable) {
-            if (view != null) {
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, 60, 60);
-                    view.setCompoundDrawables(drawable, null, null, null);
-                } else {
-                    view.setCompoundDrawables(null, null, null, null);
-                }
-            }
-        }
     }
 
 
-    public OpenFileDialog(final Context context) {
+    OpenFileDialog(final Context context) {
         super(context);
         isOnlyFoldersFilter = false;
         title = createTitle(context);
@@ -123,7 +106,6 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
                         if (selectedIndex > -1 && listener != null) {
                             try {
                                 listener.OnSelectedFile(listView.getItemAtPosition(selectedIndex).toString(), currentPath);
-                                dire = currentPath;
                                 mSettings = getContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
                                 String counter = mSettings.getString(APP_PREFERENCES_COUNTER, "");
                                 if (counter.equals("0")){
@@ -170,50 +152,20 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
         return super.show();
     }
 
-    public OpenFileDialog setFilter(final String filter) {
+    OpenFileDialog setFilter() {
         filenameFilter = new FilenameFilter() {
 
             @Override
             public boolean accept(File file, String fileName) {
                 File tempFile = new File(String.format("%s/%s", file.getPath(), fileName));
-                if (tempFile.isFile())
-                    return tempFile.getName().matches(filter);
-                return true;
+                return !tempFile.isFile() || tempFile.getName().matches(".*\\.csv");
             }
         };
         return this;
     }
 
-    public OpenFileDialog setOnlyFoldersFilter() {
-        isOnlyFoldersFilter = true;
-        filenameFilter = new FilenameFilter() {
-
-            @Override
-            public boolean accept(File file, String fileName) {
-                File tempFile = new File(String.format("%s/%s", file.getPath(), fileName));
-                return tempFile.isDirectory();
-            }
-        };
-        return this;
-    }
-
-    public OpenFileDialog setOpenDialogListener(OpenDialogListener listener) {
+    OpenFileDialog setOpenDialogListener(OpenDialogListener listener) {
         this.listener = listener;
-        return this;
-    }
-
-    public OpenFileDialog setFolderIcon(Drawable drawable) {
-        this.folderIcon = drawable;
-        return this;
-    }
-
-    public OpenFileDialog setFileIcon(Drawable drawable) {
-        this.fileIcon = drawable;
-        return this;
-    }
-
-    public OpenFileDialog setAccessDeniedMessage(String message) {
-        this.accessDeniedMessage = message;
         return this;
     }
 
@@ -289,12 +241,13 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
         return textView;
     }
 
-    public int getTextWidth(String text, Paint paint) {
+    private int getTextWidth(String text, Paint paint) {
         Rect bounds = new Rect();
         paint.getTextBounds(text, 0, text.length(), bounds);
         return bounds.left + bounds.width() + 80;
     }
 
+    @SuppressLint("SetTextI18n")
     private void changeTitle() {
         String titleText = currentPath;
         int screenWidth = getScreenSize(getContext()).x;
@@ -349,8 +302,6 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
             changeTitle();
         } catch (NullPointerException e) {
             String message = getContext().getResources().getString(android.R.string.unknownName);
-            if (!accessDeniedMessage.equals(""))
-                message = accessDeniedMessage;
             Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
     }
@@ -363,7 +314,7 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
             public void onItemClick(AdapterView<?> adapterView, View view, int index, long l) {
                 final ArrayAdapter<File> adapter = (FileAdapter) adapterView.getAdapter();
                 File file = adapter.getItem(index);
-                if (file.isDirectory()) {
+                if (file != null && file.isDirectory()) {
                     currentPath = file.getPath();
                     RebuildFiles(adapter);
                 } else {

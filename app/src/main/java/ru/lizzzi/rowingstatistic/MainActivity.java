@@ -1,6 +1,7 @@
 package ru.lizzzi.rowingstatistic;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
@@ -14,8 +15,6 @@ import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -35,15 +34,14 @@ import java.util.Date;
 import java.util.Scanner;
 import java.util.TimeZone;
 
-import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
 import ru.lizzzi.rowingstatistic.db.data.RowerContract.RowerData;
+import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
 
 public class MainActivity extends AppCompatActivity {
 
     //файл с полями для запоминания последней открытой папки
     public static final String APP_PREFERENCES = "lastdir";
     public static final String APP_PREFERENCES_COUNTER = "counter";
-    private SharedPreferences mSettings;
 
     //файл для сохранения настоек для построения графиков
     public static final String APP_PREFERENCES_Chart = "chart_settings";
@@ -83,6 +81,8 @@ public class MainActivity extends AppCompatActivity {
 
     public static final int NUMBER_OF_REQUEST = 23401;
 
+    LoadData NewTask;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -121,6 +121,9 @@ public class MainActivity extends AppCompatActivity {
 
             if (canRead != PackageManager.PERMISSION_GRANTED || canWrite != PackageManager.PERMISSION_GRANTED) {
 
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE}, NUMBER_OF_REQUEST);
+                /*
                 //Нужно ли нам показывать объяснения , зачем нам нужно это разрешение
                 if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                     //показываем объяснение
@@ -128,12 +131,13 @@ public class MainActivity extends AppCompatActivity {
                     //просим разрешение
                     requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             Manifest.permission.READ_EXTERNAL_STORAGE}, NUMBER_OF_REQUEST);
-                }
+                }*/
             }
         }
 
     }
 
+    /*
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
@@ -145,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-    }
+    }*/
 
     @Override
     protected void onStart(){
@@ -165,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
 
         //присваеваем 0 для сброса запомненой папки в классе OpenFileDialog
-        mSettings = this.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences mSettings = this.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = mSettings.edit();
         editor.putString(APP_PREFERENCES_COUNTER, "0");
         editor.apply();
@@ -177,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (countOpenFiles < 8){ //проверка на макисмальное количество файлов
             final OpenFileDialog fileDialog = new OpenFileDialog(this)
-                    .setFilter(".*\\.csv")
+                    .setFilter()
                     .setOpenDialogListener(new OpenFileDialog.OpenDialogListener() {
 
 
@@ -189,8 +193,12 @@ public class MainActivity extends AppCompatActivity {
                             }else {
                                 chek_load_file_again2 = fileName;
 
-                                LoadData catTask = new LoadData();
-                                catTask.execute(fileName);
+                                NewTask = (LoadData) getLastNonConfigurationInstance();
+                                if (NewTask == null){
+                                    NewTask = new LoadData();
+                                    NewTask.link(MainActivity.this);
+                                    NewTask.execute(fileName);
+                                }
                             }
                         }
                     });
@@ -305,6 +313,7 @@ public class MainActivity extends AppCompatActivity {
                 editor.apply();
                 showDB(); //получаем границы для графиков
 
+
                 Intent intent = new Intent(MainActivity.this, ChartActivity.class);
                 startActivity(intent);
 
@@ -315,9 +324,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void WriteDB (int id, double distatnce, long time, double speed, int strokerate, int power){ //пишем в БД
+    private void WriteDB(int id, double distatnce, long time, double speed, int strokerate, int power){ //пишем в БД
 
-        RowerDBHelper mDBHelper = new RowerDBHelper(this);
+        RowerDBHelper mDBHelper = new RowerDBHelper(MainActivity.this);
         SQLiteDatabase db = mDBHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
 
@@ -359,8 +368,9 @@ public class MainActivity extends AppCompatActivity {
         if (cursor != null) {
             cursor.moveToFirst();
             editor.putString(APP_PREFERENCES_CHART_SPEED, cursor.getString(0));
+            cursor.close();
         }
-        cursor.close();
+
 
         String[] max_stroke_rate_db = {
                 "MAX(" + RowerData.COLUMN_STROKE_RATE + ")",
@@ -379,8 +389,9 @@ public class MainActivity extends AppCompatActivity {
         if (cursor != null) {
             cursor.moveToFirst();
             editor.putString(APP_PREFERENCES_CHART_STROKE_RATE, cursor.getString(0));
+            cursor.close();
         }
-        cursor.close();
+
 
         String[] max_power_db = {
                 "MAX(" + RowerData.COLUMN_POWER + ")",
@@ -399,8 +410,9 @@ public class MainActivity extends AppCompatActivity {
         if (cursor != null) {
             cursor.moveToFirst();
             editor.putString(APP_PREFERENCES_CHART_POWER, cursor.getString(0));
+            cursor.close();
         }
-        cursor.close();
+
 
         String[] max_time_db = {
                 "MAX(" + RowerData.COLUMN_TIME + ")",
@@ -419,8 +431,9 @@ public class MainActivity extends AppCompatActivity {
         if (cursor != null) {
             cursor.moveToFirst();
             editor.putString(APP_PREFERENCES_CHART_TIME_MAX, cursor.getString(0));
+            cursor.close();
         }
-        cursor.close();
+
 
         String[] min_time_db = {
                 "MIN(" + RowerData.COLUMN_TIME + ")",
@@ -439,8 +452,9 @@ public class MainActivity extends AppCompatActivity {
         if (cursor != null) {
             cursor.moveToFirst();
             editor.putString(APP_PREFERENCES_CHART_TIME_MIN, cursor.getString(0));
+            cursor.close();
+
         }
-        cursor.close();
 
         String[] max_distatnce_db = {
                 "MAX(" + RowerData.COLUMN_DISTANCE + ")",
@@ -459,8 +473,9 @@ public class MainActivity extends AppCompatActivity {
         if (cursor != null) {
             cursor.moveToFirst();
             editor.putString(APP_PREFERENCES_CHART_DISTATNCE_MAX, cursor.getString(0));
+            cursor.close();
         }
-        cursor.close();
+
 
         String[] min_distatnce_db = {
                 "MIN(" + RowerData.COLUMN_DISTANCE + ")",
@@ -479,8 +494,9 @@ public class MainActivity extends AppCompatActivity {
         if (cursor != null) {
             cursor.moveToFirst();
             editor.putString(APP_PREFERENCES_CHART_DISTATNCE_MIN, cursor.getString(0));
+            cursor.close();
         }
-        cursor.close();
+
         editor.apply();
     }
 
@@ -496,14 +512,24 @@ public class MainActivity extends AppCompatActivity {
         button.setTextSize(textsize);
     }
 
-    class LoadData extends AsyncTask<String, Void, Void> {
+    static class LoadData extends AsyncTask<String, Void, Void> {
 
-        ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
+        @SuppressLint("StaticFieldLeak")
+        MainActivity activity;
+        ProgressDialog mProgressDialog;
+
+        // получаем ссылку на MainActivity
+        void link(MainActivity act) {
+            activity = act;
+            mProgressDialog = new ProgressDialog(activity);
+        }
+
+
 
         @Override
         protected void onPreExecute(){
             mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            mProgressDialog.setMessage(getString(R.string.load_data));
+            mProgressDialog.setMessage(activity.getString(R.string.load_data));
             mProgressDialog.show();
         }
 
@@ -520,71 +546,72 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // считываем построчно
-            String line = null;
+            String line;
             String timeStart = null;
-            Scanner scanner = null;
+            Scanner scanner;
             boolean flag = false;
             int index = 0;
             int row = 0;
             try {
+                assert reader != null;
                 while ((line = reader.readLine()) != null) {
                     scanner = new Scanner(line);
                     scanner.useDelimiter(",");
                     while (scanner.hasNext()) {
                         String data = scanner.next();
-                        id = countOpenFiles;
+                        activity.id = activity.countOpenFiles;
                         if (row == 3){ //в этой строке берем время начала тренировки
                             if (index == 1){
-                                distance = 0;
+                                activity.distance = 0;
                                              /*
                                             Берем время начала тренировки. Ниже берем именно время, отрезая дату
                                              */
                                 timeStart = (data.substring(9));
-                                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+                                @SuppressLint("SimpleDateFormat") SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
                                 timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
                                 Date dateStart = timeFormat.parse(timeStart);
-                                time = dateStart.getTime();
-                                speed = 0;
-                                stroke_rate = 0;
-                                power = 0;
+                                activity.time = dateStart.getTime();
+                                activity.speed = 0;
+                                activity.stroke_rate = 0;
+                                activity.power = 0;
                             }
                         }
                         if (row > 29){ //начало массива данных тренировки
                             if (index == 1){
                                 if (!"---".equals(data)){
-                                    distance = Double.parseDouble(data);
+                                    activity.distance = Double.parseDouble(data);
                                 }else {
                                     flag = true;
                                 }
                             }else if (index == 3){
                                 if (!"---".equals(data)){
-                                    SimpleDateFormat timeFormat1 = new SimpleDateFormat("HH:mm");
-                                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.S");
+                                    @SuppressLint("SimpleDateFormat") SimpleDateFormat timeFormat1 = new SimpleDateFormat("HH:mm");
+                                    @SuppressLint("SimpleDateFormat") SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
                                     timeFormat1.setTimeZone(TimeZone.getTimeZone("UTC"));
                                     timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
                                     Date date1 = timeFormat1.parse(timeStart);
                                     Date date2 = timeFormat.parse(data);
-                                    time = date1.getTime() + date2.getTime();
+                                    activity.time = date1.getTime() + date2.getTime();
                                 }else {
                                     flag = true;
                                 }
 
                             }else if (index == 5){
                                 if (!"---".equals(data)){
-                                    speed = Double.parseDouble(data);
+                                    activity.speed = Double.parseDouble(data);
                                 }else {
                                     flag = true;
                                 }
                             }else if (index == 8){
                                 if (!"---".equals(data)){
-                                    stroke_rate = Integer.parseInt(data);
+                                    activity.stroke_rate = Integer.parseInt(data);
                                 }else {
                                     flag = true;
                                 }
                             }else  if (index == 13){
                                 if (!"---".equals(data)){
-                                    power = Integer.parseInt(data);
+                                    activity.power = Integer.parseInt(data);
                                 }else {
                                     flag = true;
                                 }
@@ -600,7 +627,7 @@ public class MainActivity extends AppCompatActivity {
 
                     index = 0;
                     if (row == 3 || (row > 29 & !flag )){
-                        WriteDB(id, distance, time, speed, stroke_rate, power); //пишем в БД строку
+                        activity.WriteDB(activity.id, activity.distance, activity.time, activity.speed, activity.stroke_rate, activity.power); //пишем в БД строку
                     }
                     row++;
                     flag = false;
@@ -609,7 +636,11 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             } catch (ParseException e) {
                 e.printStackTrace();
+            }catch (NullPointerException e){
+                e.printStackTrace();
+                Toast.makeText(activity.getApplicationContext(), R.string.empty_file, Toast.LENGTH_LONG).show();
             }
+
             //закрываем наш ридер
             try {
                 reader.close();
@@ -624,43 +655,44 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
 
-            final LinearLayout LL_Chart1 = (LinearLayout)findViewById(R.id.LL_Chart1);
-            final LinearLayout LL_Chart2 = (LinearLayout)findViewById(R.id.LL_Chart2);
-            final LinearLayout LL_Chart3 = (LinearLayout)findViewById(R.id.LL_Chart3);
-            final LinearLayout LL_Chart4 = (LinearLayout)findViewById(R.id.LL_Chart4);
-            final LinearLayout LL_Chart5 = (LinearLayout)findViewById(R.id.LL_Chart5);
-            final LinearLayout LL_Chart6 = (LinearLayout)findViewById(R.id.LL_Chart6);
-            final LinearLayout LL_Chart7 = (LinearLayout)findViewById(R.id.LL_Chart7);
-            final LinearLayout LL_Chart8 = (LinearLayout)findViewById(R.id.LL_Chart8);
+            final LinearLayout LL_Chart1 = (LinearLayout)activity.findViewById(R.id.LL_Chart1);
+            final LinearLayout LL_Chart2 = (LinearLayout)activity.findViewById(R.id.LL_Chart2);
+            final LinearLayout LL_Chart3 = (LinearLayout)activity.findViewById(R.id.LL_Chart3);
+            final LinearLayout LL_Chart4 = (LinearLayout)activity.findViewById(R.id.LL_Chart4);
+            final LinearLayout LL_Chart5 = (LinearLayout)activity.findViewById(R.id.LL_Chart5);
+            final LinearLayout LL_Chart6 = (LinearLayout)activity.findViewById(R.id.LL_Chart6);
+            final LinearLayout LL_Chart7 = (LinearLayout)activity.findViewById(R.id.LL_Chart7);
+            final LinearLayout LL_Chart8 = (LinearLayout)activity.findViewById(R.id.LL_Chart8);
 
-            countOpenFiles++;
+            activity.countOpenFiles++;
 
-            if (countOpenFiles >0){
+            if (activity.countOpenFiles >0){
                 LL_Chart1.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >1){
+            if (activity.countOpenFiles >1){
                 LL_Chart2.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >2){
+            if (activity.countOpenFiles >2){
                 LL_Chart3.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >3){
+            if (activity.countOpenFiles >3){
                 LL_Chart4.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >4){
+            if (activity.countOpenFiles >4){
                 LL_Chart5.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >5){
+            if (activity.countOpenFiles >5){
                 LL_Chart6.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >6){
+            if (activity.countOpenFiles >6){
                 LL_Chart7.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >7){
+            if (activity.countOpenFiles >7){
                 LL_Chart8.setVisibility(View.VISIBLE);
             }
             mProgressDialog.hide();
-            Toast.makeText(getApplicationContext(), "Файл загружен", Toast.LENGTH_LONG).show();
+            Toast.makeText(activity.getApplicationContext(), "Файл загружен", Toast.LENGTH_LONG).show();
+            activity = null; // обнуляем ссылку
         }
     }
 }

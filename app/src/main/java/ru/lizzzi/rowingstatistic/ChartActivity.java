@@ -1,5 +1,6 @@
 package ru.lizzzi.rowingstatistic;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -12,6 +13,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.FragmentActivity;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -44,7 +46,6 @@ import java.util.TimeZone;
 
 import ru.lizzzi.rowingstatistic.chart.ChartColor;
 import ru.lizzzi.rowingstatistic.chart.HourAxisValueFormatter;
-import ru.lizzzi.rowingstatistic.db.data.RowerContract;
 import ru.lizzzi.rowingstatistic.db.data.RowerContract.RowerData;
 import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
 
@@ -76,21 +77,13 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
     public static final String APP_PREFERENCES_CHART_TIME_MAX = "timemax";
     public static final String APP_PREFERENCES_CHART_TIME_MIN = "timemin";
     public static final String APP_PREFERENCES_CHART_DISTATNCE_MAX = "distatncemax";
-    public static final String APP_PREFERENCES_CHART_DISTATNCE_MIN = "distatncemin";
     private SharedPreferences mCharts;
 
     //графики и массивы для них
     private LineChart mChartDown;
     private LineChart mChartUp;
-    ArrayList<ILineDataSet> dataSetsUp = new ArrayList<ILineDataSet>();
-    ArrayList<ILineDataSet> dataSetsDown = new ArrayList<ILineDataSet>();
-
-    //переменны для массивов для графиков
-    private float distance;
-    private long time;
-    private float speed;
-    private int stroke_rate;
-    private int power;
+    ArrayList<ILineDataSet> dataSetsUp = new ArrayList<>();
+    ArrayList<ILineDataSet> dataSetsDown = new ArrayList<>();
 
     private int countOpenFiles = 0;//переменная для подсчета кол-ва открытых файлов
 
@@ -111,15 +104,15 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
     double tap_point = 0;
     int counter_peroid = 0;
 
-    String mass_temp = new String();
+    String mass_temp;
 
     float ram_begin = -1;
     float ram_end = 0;
 
     String[] chart_name_name = new String[8];
 
-    double correct_distance = new Double(7.1);
-    double correct_time = new Double(10.1);
+    double correct_distance = 7.1;
+    double correct_time = 10.1;
 
     int textsize = 12;
 
@@ -141,7 +134,6 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
         max_time = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_TIME_MAX, ""));
         min_time = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_TIME_MIN, ""));
         max_distance = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_DISTATNCE_MAX, ""));
-        //min_distance = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_DISTATNCE_MIN, ""));
         min_distance = 0;
         max_stroke_rate = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_STROKE_RATE, ""));
 
@@ -225,8 +217,8 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                         // граница строится как график
                         // заполняем массив для еще одного графика
                         ram_begin = (float) tap_point;
-                        ArrayList<Entry> values_up = new ArrayList<Entry>();
-                        ArrayList<Entry> values_down = new ArrayList<Entry>();
+                        ArrayList<Entry> values_up = new ArrayList<>();
+                        ArrayList<Entry> values_down = new ArrayList<>();
                         values_up.add(new Entry(ram_begin, 0));
                         values_up.add(new Entry(ram_begin, 1));
 
@@ -274,19 +266,9 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                     } else {
                         //здесь все аналогично выше
                         ram_begin = (float) tap_point;
-                        /*
-                        ArrayList<Entry> values_up = new ArrayList<Entry>();
-                        ArrayList<Entry> values_down = new ArrayList<Entry>();
-                        values_up.add(new Entry(ram_begin, 0));
-                        values_up.add(new Entry(ram_begin, 1));
 
-                        values_down.add(new Entry(ram_begin, 0));
-                        values_down.add(new Entry(ram_begin, 1));
-                        LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
-                        LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");*/
-
-                        ArrayList<Entry> values_up = new ArrayList<Entry>();
-                        ArrayList<Entry> values_down = new ArrayList<Entry>();
+                        ArrayList<Entry> values_up = new ArrayList<>();
+                        ArrayList<Entry> values_down = new ArrayList<>();
                         values_up.add(new Entry(ram_begin, 0));
                         values_up.add(new Entry(ram_begin, 1));
 
@@ -352,26 +334,16 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                         Toast.makeText(getApplicationContext(), "Конец периода не может быть меньше начала", Toast.LENGTH_LONG).show();
                     } else {
                         ram_end = (float) tap_point;
-                        /*
-                        ArrayList<Entry> values_up = new ArrayList<Entry>();
-                        ArrayList<Entry> values_down = new ArrayList<Entry>();
+
+                        ArrayList<Entry> values_up = new ArrayList<>();
+                        ArrayList<Entry> values_down = new ArrayList<>();
                         values_up.add(new Entry(ram_end, 0));
                         values_up.add(new Entry(ram_end, 1));
 
                         values_down.add(new Entry(ram_end, 0));
                         values_down.add(new Entry(ram_end, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Конец выборки");
-                        LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");*/
-
-                        ArrayList<Entry> values_up = new ArrayList<Entry>();
-                        ArrayList<Entry> values_down = new ArrayList<Entry>();
-                        values_up.add(new Entry(ram_end, 0));
-                        values_up.add(new Entry(ram_end, 1));
-
-                        values_down.add(new Entry(ram_end, 0));
-                        values_down.add(new Entry(ram_end, 1));
-                        LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
-                        LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");
+                        LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");
 
                         d_up.setLineWidth(3.5f);
                         d_up.setCircleRadius(1f);
@@ -409,26 +381,16 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                         Toast.makeText(getApplicationContext(), "Конец периода не может быть меньше начала", Toast.LENGTH_LONG).show();
                     } else {
                         ram_end = (float) tap_point;
-                        /*
-                        ArrayList<Entry> values_up = new ArrayList<Entry>();
-                        ArrayList<Entry> values_down = new ArrayList<Entry>();
+
+                        ArrayList<Entry> values_up = new ArrayList<>();
+                        ArrayList<Entry> values_down = new ArrayList<>();
                         values_up.add(new Entry(ram_end, 0));
                         values_up.add(new Entry(ram_end, 1));
 
                         values_down.add(new Entry(ram_end, 0));
                         values_down.add(new Entry(ram_end, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Конец выборки");
-                        LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");*/
-
-                        ArrayList<Entry> values_up = new ArrayList<com.github.mikephil.charting.data.Entry>();
-                        ArrayList<Entry> values_down = new ArrayList<com.github.mikephil.charting.data.Entry>();
-                        values_up.add(new Entry(ram_end, 0));
-                        values_up.add(new Entry(ram_end, 1));
-
-                        values_down.add(new Entry(ram_end, 0));
-                        values_down.add(new Entry(ram_end, 1));
-                        LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
-                        LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");
+                        LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");
 
                         d_up.setLineWidth(3.5f);
                         d_up.setCircleRadius(1f);
@@ -470,7 +432,7 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
             //сначала создаем поле для ввода комментария
             LayoutInflater li = LayoutInflater.from(context);
-            final View promptsView = li.inflate(R.layout.comment_for_result, null);
+            @SuppressLint("InflateParams") final View promptsView = li.inflate(R.layout.comment_for_result, null);
 
             //Создаем AlertDialog
             AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(context);
@@ -491,25 +453,30 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
 
                                     SQLiteDatabase db = mDBHelper.getReadableDatabase();
-                                    Cursor cursor = null;
-                                    mass_temp = mass_temp + (counter_peroid + 1) + ";";
+                                    Cursor cursor;
+                                    if (TextUtils.isEmpty(mass_temp)){
+                                        mass_temp = (counter_peroid + 1) + ";";
+                                    }else{
+                                        mass_temp = mass_temp.concat((counter_peroid + 1) + ";");
+                                    }
+
 
                                     //цикл для взятия среднего значения
                                     for (int z = 0; z < countOpenFiles; z++) { //для каждого пловца
 
                                         if (timeF_distanceT == 0) { //проверка по времени или дистанции делать запрос в БД
-                                            //берем среднее значение по пощности...
+                                            //берем среднее значение по мощности...
                                             String[] projection = {
-                                                    "AVG(" + RowerContract.RowerData.COLUMN_POWER + ")"
+                                                    "AVG(" + RowerData.COLUMN_POWER + ")"
                                             };
 
                                             //для пловца № в промежутке выборки
-                                            String selection = RowerContract.RowerData.COLUMN_ROWER + "=? AND " + RowerContract.RowerData.COLUMN_TIME
+                                            String selection = RowerData.COLUMN_ROWER + "=? AND " + RowerData.COLUMN_TIME
                                                     + " BETWEEN " + (ram_begin - 10) + " AND " + (ram_end + 10);
                                             String[] selectionArgs = {String.valueOf(z)};
 
                                             cursor = db.query(
-                                                    RowerContract.RowerData.TABLE_NAME,  // таблица
+                                                    RowerData.TABLE_NAME,  // таблица
                                                     projection,            // столбцы
                                                     selection,             // столбцы для условия WHERE
                                                     selectionArgs,         // значения для условия WHERE
@@ -521,9 +488,10 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                                             if (cursor != null) {
                                                 cursor.moveToFirst();
                                                 //добавлем значение в строку
-                                                mass_temp = mass_temp + String.valueOf(cursor.getFloat(0)) + ";";
+                                                mass_temp = mass_temp.concat(String.valueOf(cursor.getFloat(0)) + ";");
+                                                cursor.close();
                                             }
-                                            cursor.close();
+
                                         } else {
                                             //все аналогично выше, только выборка берется по дистанции
                                             String[] projection = {
@@ -550,9 +518,10 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
                                             if (cursor != null) {
                                                 cursor.moveToFirst();
-                                                mass_temp = mass_temp + String.valueOf(cursor.getFloat(0)) + ";";
+                                                mass_temp = mass_temp.concat(String.valueOf(cursor.getFloat(0)) + ";");
+                                                cursor.close();
                                             }
-                                            cursor.close();
+
                                         }
                                     }
 
@@ -627,7 +596,7 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
         if (mass_temp.length() > 1) { //проверяем чтобы строка была не пустая
             LayoutInflater li = LayoutInflater.from(context);
-            final View promptsView = li.inflate(R.layout.result_filename, null);
+            @SuppressLint("InflateParams") final View promptsView = li.inflate(R.layout.result_filename, null);
 
             //Создаем AlertDialog
             AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(context);
@@ -680,9 +649,9 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                                         sdFile = sdFile + ".csv";
                                     } else {
                                         Calendar c = Calendar.getInstance();
-                                        int hour = c.get(c.HOUR_OF_DAY);
-                                        int minute = c.get(c.MINUTE);
-                                        int second = c.get(c.SECOND);
+                                        int hour = c.get(Calendar.HOUR_OF_DAY);
+                                        int minute = c.get(Calendar.MINUTE);
+                                        int second = c.get(Calendar.SECOND);
                                         sdFile = "result_" + hour + "-" + minute + "-" + second + ".csv";
                                     }
 
@@ -716,7 +685,6 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                                                 outputStream.write(firts_row.getBytes("Cp1251"));
                                                 outputStream.write(mass_temp.getBytes("Cp1251"));
                                                 outputStream.close();
-                                                firts_row = "";
                                                 mass_temp = "";
                                                 Toast.makeText(getApplicationContext(), "Файл сохранен на внешнюю память!", Toast.LENGTH_SHORT).show();
                                             } catch (Exception e1) {
@@ -732,7 +700,6 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                                                 outputStream.write(firts_row.getBytes("Cp1251"));
                                                 outputStream.write(mass_temp.getBytes("Cp1251"));
                                                 outputStream.close();
-                                                firts_row = "";
                                                 mass_temp = "";
                                                 Toast.makeText(getApplicationContext(), "Файл сохранен в папку приложения!", Toast.LENGTH_SHORT).show();
                                             } catch (Exception e2) {
@@ -850,13 +817,13 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
     private void ChartShowALL() { //метод построения графиков
         for (int z = 0; z < countOpenFiles; z++) {
 
-            ArrayList<Entry> rower_AL = new ArrayList<Entry>();
-            ArrayList<Entry> speed_AL = new ArrayList<Entry>();
-            ArrayList<Entry> stroke_rate_AL = new ArrayList<Entry>();
+            ArrayList<Entry> rower_AL = new ArrayList<>();
+            ArrayList<Entry> speed_AL = new ArrayList<>();
+            ArrayList<Entry> stroke_rate_AL = new ArrayList<>();
 
             RowerDBHelper mDBHelper = new RowerDBHelper(this);
             SQLiteDatabase db = mDBHelper.getReadableDatabase();
-            Cursor cursor = null;
+            Cursor cursor;
 
             //Делаем запрос в БД для полуения данных
             String[] projection = {
@@ -878,9 +845,9 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
             if (cursor != null && cursor.moveToFirst()) {
                 do { //наполняем массивы для построения
-                    time = cursor.getLong(cursor.getColumnIndex(RowerData.COLUMN_TIME));
-                    distance = cursor.getFloat(cursor.getColumnIndex(RowerData.COLUMN_DISTANCE));
-                    power = cursor.getInt(cursor.getColumnIndex(RowerData.COLUMN_POWER));
+                    long time = cursor.getLong(cursor.getColumnIndex(RowerData.COLUMN_TIME));
+                    float distance = cursor.getFloat(cursor.getColumnIndex(RowerData.COLUMN_DISTANCE));
+                    int power = cursor.getInt(cursor.getColumnIndex(RowerData.COLUMN_POWER));
                     float ppower = ((float) power / (float) max_power);
                     if (timeF_distanceT == 0) {
                         rower_AL.add(new com.github.mikephil.charting.data.Entry(time, ppower));
@@ -889,9 +856,9 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                     }
 
                     if (z == 0) {
-                        speed = cursor.getFloat(cursor.getColumnIndex(RowerData.COLUMN_SPEED));
+                        float speed = cursor.getFloat(cursor.getColumnIndex(RowerData.COLUMN_SPEED));
                         float sspeed = (speed / max_absolut);
-                        stroke_rate = cursor.getInt(cursor.getColumnIndex(RowerData.COLUMN_STROKE_RATE));
+                        int stroke_rate = cursor.getInt(cursor.getColumnIndex(RowerData.COLUMN_STROKE_RATE));
                         float sstroke_rate = ((float) stroke_rate / max_stroke_rate);
                         if (timeF_distanceT == 0) {
                             speed_AL.add(new com.github.mikephil.charting.data.Entry(time, sspeed));
@@ -904,8 +871,9 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
                     }
 
                 } while (cursor.moveToNext());
+                cursor.close();
             }
-            cursor.close();
+
             db.close();
 
             LineDataSet d = new LineDataSet(rower_AL, chart_name_name[z]);
@@ -1157,8 +1125,8 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
         TextView distancesample = (TextView) findViewById(R.id.distancesample);
 
         if (ram_begin != -1 && ram_end != 0) { //если зафиксирована выборка
-            double start = 0;
-            double end = 0;
+            double start;
+            double end;
             if (timeF_distanceT == 0) {
                 start = Find_Distance(ram_begin);
                 end = Find_Distance(ram_end);
@@ -1193,7 +1161,7 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
         long itemLong = (long) (correct_time);
         Date itemDate = new Date(itemLong);
-        SimpleDateFormat timeFormat = new SimpleDateFormat("mm:ss.S");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat timeFormat = new SimpleDateFormat("mm:ss.S");
         timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         String itemDateStr = timeFormat.format(itemDate);
         timesample.setText(itemDateStr);
@@ -1202,7 +1170,7 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
     private double Find_Time(double point) { //метод поиска времени по дистанции
         RowerDBHelper mDBHelper = new RowerDBHelper(this);
         SQLiteDatabase db = mDBHelper.getReadableDatabase();
-        Cursor cursor = null;
+        Cursor cursor;
         String[] projection1 = {
                 RowerData.COLUMN_TIME
         };
@@ -1220,8 +1188,9 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
         if (cursor != null && cursor.moveToNext()) {
             correct_time = cursor.getDouble(cursor.getColumnIndex(RowerData.COLUMN_TIME));
+            cursor.close();
         }
-        cursor.close();
+
         db.close();
         mDBHelper.close();
         return correct_time;
@@ -1231,7 +1200,7 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
     private double Find_Distance(double point) { //метод поиска дистанции по времени
         RowerDBHelper mDBHelper = new RowerDBHelper(this);
         SQLiteDatabase db = mDBHelper.getReadableDatabase();
-        Cursor cursor = null;
+        Cursor cursor;
         String[] projection = {
                 RowerData.COLUMN_DISTANCE
         };
@@ -1250,8 +1219,9 @@ public class ChartActivity extends FragmentActivity implements OnChartValueSelec
 
         if (cursor != null && cursor.moveToNext()) {
             correct_distance = cursor.getDouble(cursor.getColumnIndex(RowerData.COLUMN_DISTANCE));
+            cursor.close();
         }
-        cursor.close();
+
         db.close();
         mDBHelper.close();
         return correct_distance;
