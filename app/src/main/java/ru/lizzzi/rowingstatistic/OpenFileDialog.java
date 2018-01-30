@@ -79,7 +79,7 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
             view.setText(file != null ? file.getName() : null);
             if (file == null) {
                 if (selectedIndex == position)
-                    view.setBackgroundColor(getContext().getResources().getColor(R.color.colorAccent));
+                    view.setBackgroundColor(getContext().getResources().getColor(R.color.colorPrimary));
                 else
                     view.setBackgroundColor(getContext().getResources().getColor(android.R.color.transparent));
             }
@@ -217,7 +217,6 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
 
     private TextView createBackItem(Context context) {
         TextView textView = createTextView(context, android.R.style.TextAppearance_DeviceDefault_Small);
-        //Drawable drawable = getContext().getResources().getDrawable(android.R.drawable.ic_menu_directions);
         Drawable drawable = getContext().getResources().getDrawable(R.drawable.forward);
         drawable.setBounds(0, 0, 60, 60);
         textView.setCompoundDrawables(drawable, null, null, null);

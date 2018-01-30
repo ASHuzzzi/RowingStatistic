@@ -206,6 +206,8 @@ public class MainActivity extends AppCompatActivity {
         }else {
             Toast.makeText(getApplicationContext(), "Загружено максимальное количество файлов!", Toast.LENGTH_LONG).show();
         }
+
+
     }
     public void OnClick_Time(View view){ //меняет настройку отображения графика с дистанции на время
         mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
@@ -512,7 +514,7 @@ public class MainActivity extends AppCompatActivity {
         button.setTextSize(textsize);
     }
 
-    static class LoadData extends AsyncTask<String, Void, Void> {
+    static class LoadData extends AsyncTask<String, Integer, Void> {
 
         @SuppressLint("StaticFieldLeak")
         MainActivity activity;
@@ -528,22 +530,17 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPreExecute(){
-            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             mProgressDialog.setMessage(activity.getString(R.string.load_data));
+            mProgressDialog.setCancelable(false);
+            mProgressDialog.setProgress(0);
             mProgressDialog.show();
         }
 
 
         @Override
         protected Void doInBackground(String... urls) {
-
-            BufferedReader reader = null;
-            String filName = String.valueOf(urls[0]) ;
-            try {
-                reader = new BufferedReader(new FileReader(filName));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
 
             // считываем построчно
             String line;
@@ -552,9 +549,39 @@ public class MainActivity extends AppCompatActivity {
             boolean flag = false;
             int index = 0;
             int row = 0;
+            int i = 0;
+
+            BufferedReader reader = null;
+            String filName = String.valueOf(urls[0]) ;
+            try {
+                reader = new BufferedReader(new FileReader(filName));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            try {
+                assert reader != null;
+                while (reader.readLine() != null) {
+                    i++;
+                }
+            }catch (IOException e) {
+                e.printStackTrace();
+            }
+            mProgressDialog.setMax(i);
+            i = 0;
+
+
+            reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(filName));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
             try {
                 assert reader != null;
                 while ((line = reader.readLine()) != null) {
+                    i++;
+                    publishProgress(i);
                     scanner = new Scanner(line);
                     scanner.useDelimiter(",");
                     while (scanner.hasNext()) {
@@ -649,6 +676,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values)
+        {
+            super.onProgressUpdate(values);
+            mProgressDialog.setProgress(values[0]);
         }
 
         @Override

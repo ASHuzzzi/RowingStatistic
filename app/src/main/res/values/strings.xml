@@ -30,7 +30,7 @@
 
     <string name="open">Открыть</string>
 
-    <string name="load_data">Загружаю. Подождите...</string>
+    <string name="load_data">Обработка. Подождите...</string>
     <string name="empty_file">Файл пустой!</string>
 
 </resources>
