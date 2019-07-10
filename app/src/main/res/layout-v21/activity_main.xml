@@ -19,12 +19,11 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/button12"
+                android:id="@+id/buttonFileExplorer"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@android:drawable/btn_default"
-                android:onClick="OnOpenFileClick"
                 android:text="@string/load_file" />
 
         </LinearLayout>
@@ -42,20 +41,18 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/button9"
+                android:id="@+id/buttonTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:onClick="OnClick_Time"
                 android:text="@string/time"
                 tools:ignore="ButtonStyle" />
 
             <Button
-                android:id="@+id/button10"
+                android:id="@+id/buttonDistance"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:onClick="OnClick_Distance"
                 android:text="@string/distance"
                 tools:ignore="ButtonStyle" />
         </LinearLayout>
