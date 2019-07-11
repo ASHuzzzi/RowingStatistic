@@ -6,13 +6,16 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.List;
+import java.util.Map;
+
 import ru.lizzzi.rowingstatistic.db.data.RowerContract.RowerData;
 
 public class RowerDBHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "rower.db";
     private static final int DATABASE_VERSION = 1;
-    private SQLiteDatabase database;
+    private static SQLiteDatabase database;
     private Context context;
 
 
@@ -47,22 +50,30 @@ public class RowerDBHelper extends SQLiteOpenHelper {
         database.close();
     }
 
-    public void saveData(
-            int id,
-            double distance,
-            long time,
-            double speed,
-            int strokeRate,
-            int power) {
+    public void saveData(List<Map> data) {
         database = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(RowerData.COLUMN_ROWER, id);
-        values.put(RowerData.COLUMN_DISTANCE, distance);
-        values.put(RowerData.COLUMN_TIME, time);
-        values.put(RowerData.COLUMN_SPEED, speed);
-        values.put(RowerData.COLUMN_STROKE_RATE, strokeRate);
-        values.put(RowerData.COLUMN_POWER, power);
-        database.insert(RowerData.TABLE_NAME, null, values);
+        for (int i = 0; i < data.size(); i++) {
+            ContentValues values = new ContentValues();
+            values.put(
+                    RowerData.COLUMN_ROWER,
+                    Integer.valueOf(data.get(i).get("fileNumber").toString()));
+            values.put(
+                    RowerData.COLUMN_DISTANCE,
+                    Double.valueOf(data.get(i).get("distance").toString()) );
+            values.put(
+                    RowerData.COLUMN_TIME,
+                    Long.valueOf(data.get(i).get("time").toString()));
+            values.put(
+                    RowerData.COLUMN_SPEED,
+                    Double.valueOf(data.get(i).get("speed").toString()));
+            values.put(
+                    RowerData.COLUMN_STROKE_RATE,
+                    Integer.valueOf(data.get(i).get("strokeRate").toString()));
+            values.put(
+                    RowerData.COLUMN_POWER,
+                    Integer.valueOf(data.get(i).get("power").toString()));
+            database.insert(RowerData.TABLE_NAME, null, values);
+        }
         database.close();
     }
 

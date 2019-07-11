@@ -21,17 +21,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Scanner;
-import java.util.TimeZone;
-
 import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
 
 public class MainActivity extends AppCompatActivity {
@@ -70,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private int stroke_rate;
     private int power;
 
-    private int countOpenFiles = 0; //переменная для подсчета кол-ва открытых файлов
+    private int fileNumber = 0; //переменная для подсчета кол-ва открытых файлов
 
     public static final int NUMBER_OF_REQUEST = 23401;
     private RowerDBHelper mDBHelper;
@@ -111,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
         buttonFileExplorer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                if (countOpenFiles < 8) { //проверка на макисмальное количество файлов
+                if (fileNumber < 8) { //проверка на макисмальное количество файлов
                     final OpenFileDialog fileDialog = new OpenFileDialog(v.getContext())
                             .setFilter(".*\\.csv")
                             .setOpenDialogListener(new OpenFileDialog.OpenDialogListener() {
@@ -204,9 +193,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void ShowChartClick(View view){ //собираем данные, готовим их для построения графиоков
-        if (countOpenFiles == 0) {
-            toastShow("Вы не загрузили ни один из файлов!");
-        } else {
+        if (fileNumber > 0) {
             EditText chartName1 = findViewById(R.id.Chart1_New_Name);
             EditText chartName2 = findViewById(R.id.Chart2_New_Name);
             EditText chartName3 = findViewById(R.id.Chart3_New_Name);
@@ -218,54 +205,54 @@ public class MainActivity extends AppCompatActivity {
 
             sharedPreferencesCharts.edit().putInt(
                     APP_PREFERENCES_BACK,
-                    countOpenFiles).apply();
+                    fileNumber).apply();
 
             //считываем названия графиков
-            int flag = 0;
-            if (countOpenFiles > 0) {
-                flag = saveChartName(APP_PREFERENCES_CHART_NAME1, chartName1);
+            boolean chartsHaveName = false;
+            if (fileNumber > 0) {
+                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME1, chartName1);
             }
-            if (countOpenFiles > 1) {
-                flag = saveChartName(APP_PREFERENCES_CHART_NAME2, chartName2);
+            if (fileNumber > 1) {
+                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME2, chartName2);
             }
-            if (countOpenFiles > 2) {
-                flag = saveChartName(APP_PREFERENCES_CHART_NAME3, chartName3);
+            if (fileNumber > 2) {
+                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME3, chartName3);
             }
-            if (countOpenFiles > 3) {
-                flag = saveChartName(APP_PREFERENCES_CHART_NAME4, chartName4);
+            if (fileNumber > 3) {
+                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME4, chartName4);
             }
-            if (countOpenFiles > 4){
-                flag = saveChartName(APP_PREFERENCES_CHART_NAME5, chartName5);
+            if (fileNumber > 4){
+                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME5, chartName5);
             }
-            if (countOpenFiles > 5) {
-                flag = saveChartName(APP_PREFERENCES_CHART_NAME6, chartName6);
+            if (fileNumber > 5) {
+                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME6, chartName6);
             }
-            if (countOpenFiles > 6) {
-                flag = saveChartName(APP_PREFERENCES_CHART_NAME7, chartName7);
+            if (fileNumber > 6) {
+                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME7, chartName7);
             }
-            if (countOpenFiles > 7) {
-                flag = saveChartName(APP_PREFERENCES_CHART_NAME8, chartName8);
+            if (fileNumber > 7) {
+                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME8, chartName8);
             }
-            if (flag == 0) {
+            if (chartsHaveName) {
                 getBoundaryValues(); //получаем границы для графиков
                 Intent intent = new Intent(MainActivity.this, ChartActivity.class);
                 startActivityForResult(intent, 1234);
-
             } else {
                 toastShow("Не у всех графиков есть название!");
             }
+        } else {
+            toastShow("Вы не загрузили ни один из файлов!");
         }
     }
 
-    private int saveChartName(String preferencesKey, EditText editText) {
-        if (editText.getText().length() == 0) {
-            return 1;
-        } else {
+    private boolean saveChartName(String preferencesKey, EditText editText) {
+        if (editText.getText().length() != 0) {
             sharedPreferencesCharts.edit().putString(
                     preferencesKey,
                     editText.getText().toString()).apply();
-            return 0;
+            return true;
         }
+        return false;
     }
 
     private void getBoundaryValues() { //получаем границы для графиков, max/min скорости и дистанции
@@ -326,113 +313,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(String... urls) {
-
-            BufferedReader reader = null;
-            String filName = String.valueOf(urls[0]) ;
-            try {
-                reader = new BufferedReader(new FileReader(filName));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-
-            // считываем построчно
-            String line = null;
-            String timeStart = null;
-            Scanner scanner = null;
-            boolean flag = false;
-            int index = 0;
-            int row = 0;
-            try {
-                while ((line = reader.readLine()) != null) {
-                    scanner = new Scanner(line);
-                    scanner.useDelimiter(",");
-                    while (scanner.hasNext()) {
-                        String data = scanner.next();
-                        id = countOpenFiles;
-                        if (row == 3){ //в этой строке берем время начала тренировки
-                            if (index == 1){
-                                distance = 0;
-                                             /*
-                                            Берем время начала тренировки. Ниже берем именно время, отрезая дату
-                                             */
-                                timeStart = (data.substring(9));
-                                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-                                timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-                                Date dateStart = timeFormat.parse(timeStart);
-                                time = dateStart.getTime();
-                                speed = 0;
-                                stroke_rate = 0;
-                                power = 0;
-                            }
-                        }
-                        if (row > 29){ //начало массива данных тренировки
-                            if (index == 1){
-                                if (!"---".equals(data)){
-                                    distance = Double.parseDouble(data);
-                                }else {
-                                    flag = true;
-                                }
-                            }else if (index == 3){
-                                if (!"---".equals(data)){
-                                    SimpleDateFormat dateFormatShort = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                                    SimpleDateFormat dateFormatLong = new SimpleDateFormat("HH:mm:ss.S", Locale.getDefault());
-                                    dateFormatShort.setTimeZone(TimeZone.getTimeZone("UTC"));
-                                    dateFormatLong.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-                                    Date date1 = dateFormatShort.parse(timeStart);
-                                    Date date2 = dateFormatLong.parse(data);
-                                    time = date1.getTime() + date2.getTime();
-                                }else {
-                                    flag = true;
-                                }
-
-                            }else if (index == 5){
-                                if (!"---".equals(data)){
-                                    speed = Double.parseDouble(data);
-                                }else {
-                                    flag = true;
-                                }
-                            }else if (index == 8){
-                                if (!"---".equals(data)){
-                                    stroke_rate = Integer.parseInt(data);
-                                }else {
-                                    flag = true;
-                                }
-                            }else  if (index == 13){
-                                if (!"---".equals(data)){
-                                    power = Integer.parseInt(data);
-                                }else {
-                                    flag = true;
-                                }
-                            }
-
-                                        /*
-                                        Загружаем массив данных, на случай чего его можно расширить, дописав необходыме индексы
-                                        в этот метод, а так же дополнив БД полями
-                                         */
-                        }
-                        index++;
-                    }
-
-                    index = 0;
-                    if (row == 3 || (row > 29 & !flag)) {
-                        mDBHelper.saveData(id, distance, time, speed, stroke_rate, power);
-                    }
-                    row++;
-                    flag = false;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            //закрываем наш ридер
-            try {
-                reader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            Parser parser = new Parser(
+                    getApplicationContext(),
+                    String.valueOf(urls[0]),
+                    String.valueOf(fileNumber));
+            parser.parseFile();
             return null;
         }
 
@@ -449,30 +334,30 @@ public class MainActivity extends AppCompatActivity {
             final LinearLayout LL_Chart7 = findViewById(R.id.LL_Chart7);
             final LinearLayout LL_Chart8 = findViewById(R.id.LL_Chart8);
 
-            countOpenFiles++;
+            fileNumber++;
 
-            if (countOpenFiles >0){
+            if (fileNumber >0){
                 LL_Chart1.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >1){
+            if (fileNumber >1){
                 LL_Chart2.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >2){
+            if (fileNumber >2){
                 LL_Chart3.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >3){
+            if (fileNumber >3){
                 LL_Chart4.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >4){
+            if (fileNumber >4){
                 LL_Chart5.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >5){
+            if (fileNumber >5){
                 LL_Chart6.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >6){
+            if (fileNumber >6){
                 LL_Chart7.setVisibility(View.VISIBLE);
             }
-            if (countOpenFiles >7){
+            if (fileNumber >7){
                 LL_Chart8.setVisibility(View.VISIBLE);
             }
             mProgressDialog.hide();
