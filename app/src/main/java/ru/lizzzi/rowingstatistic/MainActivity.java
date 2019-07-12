@@ -51,14 +51,6 @@ public class MainActivity extends AppCompatActivity {
     public static final String APP_PREFERENCES_CHART_DISTATNCE_MIN = "distatncemin";
     private SharedPreferences sharedPreferencesCharts;
 
-    //переменные для записи в БД
-    private int id;
-    private double distance ;
-    private long time;
-    private double speed;
-    private int stroke_rate;
-    private int power;
-
     private int fileNumber = 0; //переменная для подсчета кол-ва открытых файлов
 
     public static final int NUMBER_OF_REQUEST = 23401;
@@ -67,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
     private Button buttonDistance;
     private Button buttonTime;
     private String loadedFile;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -236,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
             if (chartsHaveName) {
                 getBoundaryValues(); //получаем границы для графиков
                 Intent intent = new Intent(MainActivity.this, ChartActivity.class);
-                startActivityForResult(intent, 1234);
+                startActivity(intent);
             } else {
                 toastShow("Не у всех графиков есть название!");
             }
@@ -258,27 +249,27 @@ public class MainActivity extends AppCompatActivity {
     private void getBoundaryValues() { //получаем границы для графиков, max/min скорости и дистанции
         sharedPreferencesCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferencesCharts.edit();
-        editor.putString(
+        editor.putFloat(
                 APP_PREFERENCES_CHART_SPEED,
-                String.valueOf(mDBHelper.getMaxSpeed()));
-        editor.putString(
+                mDBHelper.getMaxSpeed());
+        editor.putFloat(
                 APP_PREFERENCES_CHART_STROKE_RATE,
-                String.valueOf(mDBHelper.getMaxStrokeRate()));
-        editor.putString(
+                mDBHelper.getMaxStrokeRate());
+        editor.putInt(
                 APP_PREFERENCES_CHART_POWER,
-                String.valueOf(mDBHelper.getMaxPower()));
-        editor.putString(
+                mDBHelper.getMaxPower());
+        editor.putFloat(
                 APP_PREFERENCES_CHART_TIME_MAX,
-                String.valueOf(mDBHelper.getMaxTime()));
-        editor.putString(
+                mDBHelper.getMaxTime());
+        editor.putFloat(
                 APP_PREFERENCES_CHART_TIME_MIN,
-                String.valueOf(mDBHelper.getMinTime()));
-        editor.putString(
+                mDBHelper.getMinTime());
+        editor.putFloat(
                 APP_PREFERENCES_CHART_DISTATNCE_MAX,
-                String.valueOf(mDBHelper.getMaxDistance()));
-        editor.putString(
+                mDBHelper.getMaxDistance());
+        editor.putFloat(
                 APP_PREFERENCES_CHART_DISTATNCE_MIN,
-                String.valueOf(mDBHelper.getMinDistance()));
+                mDBHelper.getMinDistance());
         editor.apply();
     }
 

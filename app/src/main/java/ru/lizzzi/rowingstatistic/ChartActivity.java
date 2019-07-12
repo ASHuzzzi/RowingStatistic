@@ -3,11 +3,7 @@ package ru.lizzzi.rowingstatistic;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Matrix;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -23,11 +19,13 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import ru.lizzzi.rowingstatistic.charts.charts.LineChart;
@@ -45,9 +43,7 @@ import ru.lizzzi.rowingstatistic.charts.listener.OnChartValueSelectedListener;
 import ru.lizzzi.rowingstatistic.charts.notimportant.DemoBase;
 import ru.lizzzi.rowingstatistic.charts.utils.ColorTemplate;
 
-import ru.lizzzi.rowingstatistic.db.data.RowerContract;
 import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
-import ru.lizzzi.rowingstatistic.db.data.RowerContract.RowerData;
 
 public class ChartActivity extends DemoBase implements OnChartValueSelectedListener {
 
@@ -84,13 +80,6 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     ArrayList<ILineDataSet> dataSetsUp = new ArrayList<ILineDataSet>();
     ArrayList<ILineDataSet> dataSetsDown = new ArrayList<ILineDataSet>();
 
-    //переменны для массивов для графиков
-    private float distance;
-    private long time;
-    private float speed;
-    private int stroke_rate;
-    private int power;
-
     private int countOpenFiles = 0;//переменная для подсчета кол-ва открытых файлов
 
     final Context context = this;
@@ -110,7 +99,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     double tap_point = 0;
     int counter_peroid = 0;
 
-    String mass_temp = new String();
+    String dataForSaveInFile = "";
 
     float ram_begin = -1;
     float ram_end = 0;
@@ -120,7 +109,9 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     double correct_distance = new Double(7.1);
     double correct_time = new Double(10.1);
 
-    int textsize = 12;
+    private Button buttonTime;
+    private Button buttonDistance;
+    private RowerDBHelper rowerDBHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,20 +120,43 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.chart_main);
 
+        //показываем, выделением кнопок, по каким величинам построена ось абсцисс
+        buttonTime = findViewById(R.id.button17);
+        buttonTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCharts.edit().putInt(APP_PREFERENCES_TYPE_CHART, 0).apply();
+                ButtonSelect(buttonTime);
+                ButtonNoNSelect(buttonDistance);
+            }
+        });
+        buttonDistance = findViewById(R.id.button16);
+        buttonDistance.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCharts.edit().putInt(APP_PREFERENCES_TYPE_CHART, 1).apply();
+                ButtonSelect(buttonDistance);
+                ButtonNoNSelect(buttonTime);
+            }
+        });
+
+        rowerDBHelper = new RowerDBHelper(this);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
         //получаем значения из файла chart_settings
         mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-        countOpenFiles = Integer.parseInt(mCharts.getString(APP_PREFERENCES_BACK, ""));
-        if (mCharts.getString(APP_PREFERENCES_TYPE_CHART, "").length() > 0) {
-            timeF_distanceT = Integer.parseInt(mCharts.getString(APP_PREFERENCES_TYPE_CHART, ""));
-        }
-        max_power = Integer.parseInt(mCharts.getString(APP_PREFERENCES_CHART_POWER, ""));
-        max_absolut = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_SPEED, ""));
-        max_time = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_TIME_MAX, ""));
-        min_time = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_TIME_MIN, ""));
-        max_distance = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_DISTATNCE_MAX, ""));
-        //min_distance = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_DISTATNCE_MIN, ""));
+        countOpenFiles = mCharts.getInt(APP_PREFERENCES_BACK, 1);
+        timeF_distanceT = (mCharts.getInt(APP_PREFERENCES_TYPE_CHART, 0));
+        max_power = mCharts.getInt(APP_PREFERENCES_CHART_POWER, 0);
+        max_absolut = mCharts.getFloat(APP_PREFERENCES_CHART_SPEED, 0);
+        max_time = mCharts.getFloat(APP_PREFERENCES_CHART_TIME_MAX, 0);
+        min_time = mCharts.getFloat(APP_PREFERENCES_CHART_TIME_MIN, 0);
+        max_distance = mCharts.getFloat(APP_PREFERENCES_CHART_DISTATNCE_MAX, 0);
         min_distance = 0;
-        max_stroke_rate = Float.parseFloat(mCharts.getString(APP_PREFERENCES_CHART_STROKE_RATE, ""));
+        max_stroke_rate = mCharts.getFloat(APP_PREFERENCES_CHART_STROKE_RATE, 0);
 
         //получаем названия графиков
         if (countOpenFiles > 0) {
@@ -170,45 +184,25 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
             chart_name_name[7] = mCharts.getString(APP_PREFERENCES_CHART_NAME8, "");
         }
         ChartShowALL();  //строим графики
-
-        //показываем, выделением кнопок, по каким величинам построена ось абсцисс
-        Button time = (Button) findViewById(R.id.button17);
-        Button distance = (Button) findViewById(R.id.button16);
-        textsize = (int) (time.getTextSize() / Resources.getSystem().getDisplayMetrics().density);
-        if (timeF_distanceT == 0) {
-            ButtonSelect(time);
-            ButtonNoNSelect(distance);
+        int typeChart = mCharts.getInt(APP_PREFERENCES_TYPE_CHART, 1);
+        int TIME = 0;
+        if (typeChart == TIME) {
+            ButtonSelect(buttonTime);
+            ButtonNoNSelect(buttonDistance);
         } else {
-            ButtonSelect(distance);
-            ButtonNoNSelect(time);
+            ButtonSelect(buttonDistance);
+            ButtonNoNSelect(buttonTime);
         }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         //дублируем удаление запомненной папки в File Dialog
         mSettings = this.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = mSettings.edit();
-        editor.putString(APP_PREFERENCES_COUNTER, "0");
-        editor.apply();
-
+        mSettings.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
         //отчищаем базу
-        RowerDBHelper mDBHelper = new RowerDBHelper(this);
-        SQLiteDatabase db = mDBHelper.getWritableDatabase();
-        db.delete(RowerData.TABLE_NAME, null, null);
-        db.close();
-        mDBHelper.close();
-
-        Intent answerIntent = new Intent();
-
-        Bundle bundle = new Bundle();
-        bundle.putBoolean("need_finish", true);
-
-        answerIntent.putExtras(bundle);
-        setResult(RESULT_CANCELED, answerIntent);
-
+        rowerDBHelper.clearDB();
     }
 
 
@@ -453,7 +447,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
             mDialogBuilder.setView(promptsView);
 
             //Настраиваем отображение поля для ввода текста в открытом диалоге:
-            final EditText userInput = (EditText) promptsView.findViewById(R.id.editText);
+            final EditText userInput = promptsView.findViewById(R.id.editText);
 
             //Настраиваем сообщение в диалоговом окне:
             mDialogBuilder
@@ -461,76 +455,21 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                     .setPositiveButton("Обработать",
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-
-
-
-                                    SQLiteDatabase db = mDBHelper.getReadableDatabase();
-                                    Cursor cursor = null;
-                                    mass_temp = mass_temp + (counter_peroid + 1) + ";";
-
+                                    dataForSaveInFile = dataForSaveInFile + (counter_peroid + 1) + ";";
                                     //цикл для взятия среднего значения
-                                    for (int z = 0; z < countOpenFiles; z++) { //для каждого пловца
-
-                                        if (timeF_distanceT == 0) { //проверка по времени или дистанции делать запрос в БД
-                                            //берем среднее значение по пощности...
-                                            String[] projection = {
-                                                    "AVG(" + RowerContract.RowerData.COLUMN_POWER + ")"
-                                            };
-
-                                            //для пловца № в промежутке выборки
-                                            String selection = RowerContract.RowerData.COLUMN_ROWER + "=? AND " + RowerContract.RowerData.COLUMN_TIME
-                                                    + " BETWEEN " + (ram_begin - 10) + " AND " + (ram_end + 10);
-                                            String[] selectionArgs = {String.valueOf(z)};
-
-                                            cursor = db.query(
-                                                    RowerContract.RowerData.TABLE_NAME,  // таблица
-                                                    projection,            // столбцы
-                                                    selection,             // столбцы для условия WHERE
-                                                    selectionArgs,         // значения для условия WHERE
-                                                    null,                  // Don't group the rows
-                                                    null,                  // Don't filter by row groups
-                                                    null                   // порядок сортировки
-                                            );
-
-                                            if (cursor != null) {
-                                                cursor.moveToFirst();
-                                                //добавлем значение в строку
-                                                mass_temp = mass_temp + String.valueOf(cursor.getFloat(0)) + ";";
-                                            }
-                                            cursor.close();
-                                        } else {
-                                            //все аналогично выше, только выборка берется по дистанции
-                                            String[] projection = {
-                                                    "AVG(" + RowerData.COLUMN_POWER + ")"
-                                            };
-
-                                            /*ввиду того, что беру тип переменной float (а она имеет плохую точность)
-                                            беру выборку с дипазоном +/-0.01
-                                            Прим. у float 4,1 может быть 4,100000001.
-                                            */
-                                            String selection = RowerData.COLUMN_ROWER + "=? AND " + RowerData.COLUMN_DISTANCE
-                                                    + " BETWEEN " + (ram_begin - 0.01) + " AND " + (ram_end + 0.01);
-                                            String[] selectionArgs = {String.valueOf((z))};
-
-                                            cursor = db.query(
-                                                    RowerData.TABLE_NAME,  // таблица
-                                                    projection,            // столбцы
-                                                    selection,             // столбцы для условия WHERE
-                                                    selectionArgs,         // значения для условия WHERE
-                                                    null,                  // Don't group the rows
-                                                    null,                  // Don't filter by row groups
-                                                    null                   // порядок сортировки
-                                            );
-
-                                            if (cursor != null) {
-                                                cursor.moveToFirst();
-                                                mass_temp = mass_temp + String.valueOf(cursor.getFloat(0)) + ";";
-                                            }
-                                            cursor.close();
-                                        }
+                                    for (int rower = 0; rower < countOpenFiles; rower++) { //для каждого пловца
+                                        float average = (timeF_distanceT == 0)
+                                                ? rowerDBHelper.getAverageTime(
+                                                        rower,
+                                                        ram_begin,
+                                                        ram_end)
+                                                : rowerDBHelper.getAverageDistance(
+                                                        rower,
+                                                        ram_begin,
+                                                        ram_end);
+                                        dataForSaveInFile = dataForSaveInFile + average + ";";
                                     }
-
-                                    mass_temp = mass_temp + String.valueOf(userInput.getText()) + "\n"; //добавляем коммент к строке
+                                    dataForSaveInFile = dataForSaveInFile + userInput.getText() + "\n"; //добавляем коммент к строке
                                     ram_begin = -1;
                                     ram_end = 0;
                                     counter_peroid++;
@@ -599,7 +538,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
     public void Whrite_file(View v) { //запись в файл
 
-        if (mass_temp.length() > 1) { //проверяем чтобы строка была не пустая
+        if (dataForSaveInFile.length() > 1) { //проверяем чтобы строка была не пустая
             LayoutInflater li = LayoutInflater.from(context);
             final View promptsView = li.inflate(R.layout.result_filename, null);
 
@@ -610,7 +549,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
             mDialogBuilder.setView(promptsView);
 
             //Настраиваем отображение поля для ввода текста в открытом диалоге:
-            final EditText userInput = (EditText) promptsView.findViewById(R.id.input_text);
+            final EditText userInput = promptsView.findViewById(R.id.input_text);
 
             //Настраиваем сообщение в диалоговом окне:
             mDialogBuilder
@@ -619,102 +558,96 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
 
-                                    String firts_row = "Период;";
+                                    String firstRow = "Период;";
 
                                     if (countOpenFiles > 0) {
-                                        firts_row = firts_row + mCharts.getString(APP_PREFERENCES_CHART_NAME1, "") + ";";
+                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME1, "") + ";";
                                     }
                                     if (countOpenFiles > 1) {
-                                        firts_row = firts_row + mCharts.getString(APP_PREFERENCES_CHART_NAME2, "") + ";";
+                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME2, "") + ";";
                                     }
                                     if (countOpenFiles > 2) {
-                                        firts_row = firts_row + mCharts.getString(APP_PREFERENCES_CHART_NAME3, "") + ";";
+                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME3, "") + ";";
                                     }
                                     if (countOpenFiles > 3) {
-                                        firts_row = firts_row + mCharts.getString(APP_PREFERENCES_CHART_NAME4, "") + ";";
+                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME4, "") + ";";
                                     }
                                     if (countOpenFiles > 4) {
-                                        firts_row = firts_row + mCharts.getString(APP_PREFERENCES_CHART_NAME5, "") + ";";
+                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME5, "") + ";";
                                     }
                                     if (countOpenFiles > 5) {
-                                        firts_row = firts_row + mCharts.getString(APP_PREFERENCES_CHART_NAME6, "") + ";";
+                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME6, "") + ";";
                                     }
                                     if (countOpenFiles > 6) {
-                                        firts_row = firts_row + mCharts.getString(APP_PREFERENCES_CHART_NAME7, "") + ";";
+                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME7, "") + ";";
                                     }
                                     if (countOpenFiles > 7) {
-                                        firts_row = firts_row + mCharts.getString(APP_PREFERENCES_CHART_NAME8, "") + ";";
+                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME8, "") + ";";
                                     }
-                                    firts_row = firts_row + "Комментарий" + "\n";
+                                    firstRow = firstRow + "Комментарий" + "\n";
 
                                     mSettings = context.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
-                                    String sdFile;
+                                    String nameSavedFile;
                                     if (userInput.length() > 0) {
-                                        sdFile = String.valueOf(userInput.getText());
-                                        sdFile = sdFile + ".csv";
+                                        nameSavedFile = userInput.getText().toString() + ".csv";
                                     } else {
-                                        Calendar c = Calendar.getInstance();
-                                        int hour = c.get(c.HOUR_OF_DAY);
-                                        int minute = c.get(c.MINUTE);
-                                        int second = c.get(c.SECOND);
-                                        sdFile = "result_" + hour + "-" + minute + "-" + second + ".csv";
+                                        Calendar currentTime = Calendar.getInstance();
+                                        nameSavedFile =
+                                                "Result_" +
+                                                currentTime.get(Calendar.HOUR_OF_DAY) + "-" +
+                                                currentTime.get(Calendar.MINUTE) + "-" +
+                                                currentTime.get(Calendar.SECOND) + ".csv";
                                     }
 
-
-
+                                    String checkDirectory;
+                                    File pathForSave;
+                                    String textForToast;
+                                    //пытаемся сохраниться в папку с исходниками
                                     try{
-                                        String currentPath = Environment.getExternalStorageDirectory().getPath();
-                                        if (currentPath.equals(mSettings.getString(APP_PREFERENCES_DIR, ""))){
+                                        checkDirectory = Environment.getExternalStorageDirectory().getPath();
+                                        if (checkDirectory.equals(mSettings.getString(APP_PREFERENCES_DIR, ""))){
                                             throw new Exception();
                                         }
-
+                                        pathForSave = new File(
+                                                mSettings.getString(APP_PREFERENCES_DIR, "") +
+                                                "/" +
+                                                nameSavedFile);
+                                        saveFile(pathForSave, firstRow, dataForSaveInFile);
                                         //пытаемся сохраниться в папку с исходниками
-                                        File myFile = new File(mSettings.getString(APP_PREFERENCES_DIR, "") + "/" + sdFile);
-                                        myFile.createNewFile();                                         // Создается файл, если он не был создан
-                                        FileOutputStream outputStream = new FileOutputStream(myFile);   // После чего создаем поток для записи                 // и производим непосредственно запись
-                                        outputStream.write(firts_row.getBytes("Cp1251"));
-                                        outputStream.write(mass_temp.getBytes("Cp1251"));
-                                        outputStream.close();
-                                        firts_row = "";
-                                        mass_temp = "";
-                                        Toast.makeText(getApplicationContext(), "Файл сохранен в папку с иcходными файлами!", Toast.LENGTH_SHORT).show();
+                                        pathForSave = new File(mSettings.getString(APP_PREFERENCES_DIR, "") + "/" + nameSavedFile);
+                                        saveFile(pathForSave, firstRow, dataForSaveInFile);
+                                        textForToast = "Файл сохранен в папку с иcходными файлами!";
                                     } catch (Exception e) {
-                                        String state = Environment.getExternalStorageState();
-                                        if (Environment.MEDIA_MOUNTED.equals(state)) //проверям доступность внешней памяти
+                                        checkDirectory = Environment.getExternalStorageState();
+                                        if (Environment.MEDIA_MOUNTED.equals(checkDirectory)) //проверям доступность внешней памяти
                                         {
                                             try { //сохраняем во внешнюю память
-                                                File sdDir = Environment.getExternalStorageDirectory();
-                                                File myFile = new File(sdDir + "/" + sdFile);
-                                                myFile.createNewFile();                                         // Создается файл, если он не был создан
-                                                FileOutputStream outputStream = new FileOutputStream(myFile);   // После чего создаем поток для записи                 // и производим непосредственно запись
-                                                outputStream.write(firts_row.getBytes("Cp1251"));
-                                                outputStream.write(mass_temp.getBytes("Cp1251"));
-                                                outputStream.close();
-                                                firts_row = "";
-                                                mass_temp = "";
-                                                Toast.makeText(getApplicationContext(), "Файл сохранен на внешнюю память!", Toast.LENGTH_SHORT).show();
+                                                pathForSave = new File(
+                                                        Environment.getExternalStorageDirectory() +
+                                                        "/" +
+                                                        nameSavedFile);
+                                                saveFile(pathForSave, firstRow, dataForSaveInFile);
+                                                textForToast = "Файл сохранен на внешнюю память!";
                                             } catch (Exception e1) {
                                                 e1.printStackTrace();
-                                                Toast.makeText(getApplicationContext(), "Файл не сохранен!", Toast.LENGTH_LONG).show();
+                                                textForToast = "Файл не сохранен!";
                                             }
                                         } else {
                                             try { //сохраняем во внутренню память
-                                                File sdDir = context.getFilesDir();
-                                                File myFile = new File(sdDir + "/" + sdFile);
-                                                myFile.createNewFile();                                         // Создается файл, если он не был создан
-                                                FileOutputStream outputStream = new FileOutputStream(myFile);   // После чего создаем поток для записи                 // и производим непосредственно запись
-                                                outputStream.write(firts_row.getBytes("Cp1251"));
-                                                outputStream.write(mass_temp.getBytes("Cp1251"));
-                                                outputStream.close();
-                                                firts_row = "";
-                                                mass_temp = "";
-                                                Toast.makeText(getApplicationContext(), "Файл сохранен в папку приложения!", Toast.LENGTH_SHORT).show();
+                                                pathForSave = new File(
+                                                        context.getFilesDir() +
+                                                        "/" +
+                                                        nameSavedFile);
+                                                saveFile(pathForSave, firstRow, dataForSaveInFile);
+                                                textForToast = "Файл сохранен в папку приложения!";
                                             } catch (Exception e2) {
                                                 e2.printStackTrace();
-                                                Toast.makeText(getApplicationContext(), "Файл не сохранен!", Toast.LENGTH_LONG).show();
+                                                textForToast = "Файл не сохранен!";
                                             }
                                         }
                                     }
+                                    Toast.makeText(getApplicationContext(), textForToast, Toast.LENGTH_SHORT).show();
+                                    dataForSaveInFile = "";
                                 }
                             })
                     .setNegativeButton("Отмена",
@@ -738,6 +671,18 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         }
     }
 
+    private boolean saveFile(File myFile, String firts_row, String mass_temp) throws IOException {
+        if (myFile.createNewFile()) {
+            FileOutputStream outputStream = new FileOutputStream(myFile);   // После чего создаем поток для записи                 // и производим непосредственно запись
+            outputStream.write(firts_row.getBytes("Cp1251"));
+            outputStream.write(mass_temp.getBytes("Cp1251"));
+            outputStream.close();
+            return true;
+        }else {
+            return false;
+        }
+    }
+
     public void Сhange_time(View view) { //метод смены графика с дистанции на время
 
         mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
@@ -745,8 +690,8 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         editor.putString(APP_PREFERENCES_TYPE_CHART, "0");
         editor.apply();
 
-        Button time = (Button) findViewById(R.id.button17);
-        Button distance = (Button) findViewById(R.id.button16);
+        Button time = findViewById(R.id.button17);
+        Button distance = findViewById(R.id.button16);
         ButtonNoNSelect(distance);
         ButtonSelect(time);
 
@@ -778,8 +723,8 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         editor.putString(APP_PREFERENCES_TYPE_CHART, "1");
         editor.apply();
 
-        Button time = (Button) findViewById(R.id.button17);
-        Button distance = (Button) findViewById(R.id.button16);
+        Button time = findViewById(R.id.button17);
+        Button distance = findViewById(R.id.button16);
         ButtonNoNSelect(time);
         ButtonSelect(distance);
 
@@ -822,78 +767,25 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
 
     private void ChartShowALL() { //метод построения графиков
-        for (int z = 0; z < countOpenFiles; z++) {
-
-            ArrayList<Entry> rower_AL = new ArrayList<Entry>();
-            ArrayList<Entry> speed_AL = new ArrayList<Entry>();
-            ArrayList<Entry> stroke_rate_AL = new ArrayList<Entry>();
-
-            RowerDBHelper mDBHelper = new RowerDBHelper(this);
-            SQLiteDatabase db = mDBHelper.getReadableDatabase();
-            Cursor cursor = null;
-
-            //Делаем запрос в БД для полуения данных
-            String[] projection = {
-                    RowerData.COLUMN_ROWER, RowerData.COLUMN_TIME, RowerData.COLUMN_POWER,
-                    RowerData.COLUMN_SPEED, RowerData.COLUMN_STROKE_RATE, RowerData.COLUMN_DISTANCE
-            };
-            String selection = RowerData.COLUMN_ROWER + "=?";
-            String[] selectionArgs = {String.valueOf(z)};
-
-            cursor = db.query(
-                    RowerData.TABLE_NAME,  // таблица
-                    projection,            // столбцы
-                    selection,             // столбцы для условия WHERE
-                    selectionArgs,         // значения для условия WHERE
-                    null,                  // Don't group the rows
-                    null,                  // Don't filter by row groups
-                    null                   // порядок сортировки
-            );
-
-            if (cursor != null && cursor.moveToFirst()) {
-                do { //наполняем массивы для построения
-                    time = cursor.getLong(cursor.getColumnIndex(RowerData.COLUMN_TIME));
-                    distance = cursor.getFloat(cursor.getColumnIndex(RowerData.COLUMN_DISTANCE));
-                    power = cursor.getInt(cursor.getColumnIndex(RowerData.COLUMN_POWER));
-                    float ppower = ((float) power / (float) max_power);
-                    if (timeF_distanceT == 0) {
-                        rower_AL.add(new Entry(time, ppower));
-                    } else {
-                        rower_AL.add(new Entry(distance, ppower));
-                    }
-
-                    if (z == 0) {
-                        speed = cursor.getFloat(cursor.getColumnIndex(RowerData.COLUMN_SPEED));
-                        float sspeed = (speed / max_absolut);
-                        stroke_rate = cursor.getInt(cursor.getColumnIndex(RowerData.COLUMN_STROKE_RATE));
-                        float sstroke_rate = ((float) stroke_rate / max_stroke_rate);
-                        if (timeF_distanceT == 0) {
-                            speed_AL.add(new Entry(time, sspeed));
-                            stroke_rate_AL.add(new Entry(time, sstroke_rate));
-                        } else {
-                            speed_AL.add(new Entry(distance, sspeed));
-                            stroke_rate_AL.add(new Entry(distance, sstroke_rate));
-                        }
-
-                    }
-
-                } while (cursor.moveToNext());
-            }
-            cursor.close();
-            db.close();
-
-            LineDataSet d = new LineDataSet(rower_AL, chart_name_name[z]);
+        for (int rower = 0; rower < countOpenFiles; rower++) {
+            List<List<Entry>> dataForChart = rowerDBHelper.getDataFotDrawing(
+                    rower,
+                    max_power,
+                    timeF_distanceT,
+                    max_absolut,
+                    max_stroke_rate);
+            LineDataSet d = new LineDataSet(dataForChart.get(0), chart_name_name[rower]);
 
             d.setLineWidth(2.5f);
             d.setCircleRadius(6f);
 
-            int color = mColors1[z % mColors1.length];
+            int color = mColors1[rower % mColors1.length];
             d.setColor(color);
             d.setCircleColor(color);
             dataSetsDown.add(d);
 
-            if (z == 0) { //цикл для построения верхних графиков
-                LineDataSet d2 = new LineDataSet(speed_AL, "Скорость");
+            if (rower == 0) { //цикл для построения верхних графиков
+                LineDataSet d2 = new LineDataSet(dataForChart.get(1), "Скорость");
                 d2.setLineWidth(2.5f);
                 d2.setCircleRadius(6f);
 
@@ -902,7 +794,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                 d2.setCircleColor(color2);
                 dataSetsUp.add(d2);
 
-                d2 = new LineDataSet(stroke_rate_AL, "Темп гребли");
+                d2 = new LineDataSet(dataForChart.get(2), "Темп гребли");
                 d2.setLineWidth(2.5f);
                 d2.setCircleRadius(6f);
 
@@ -919,7 +811,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     }
 
     private void ChartShowUp(ArrayList<ILineDataSet> dataSetsDown) { //задаем настройки отображения и строим график
-        mChartUp = (LineChart) findViewById(R.id.chartUp);
+        mChartUp = findViewById(R.id.chartUp);
 
         mChartUp.setDrawGridBackground(false);
         mChartUp.getDescription().setEnabled(false);
@@ -1011,7 +903,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     }
 
     private void ChartShowDown(final ArrayList<ILineDataSet> dataSetsUp) { //задаем настройки отображения и строим график
-        mChartDown = (LineChart) findViewById(R.id.chartDown);
+        mChartDown = findViewById(R.id.chartDown);
 
         mChartDown.setDrawGridBackground(false);
         mChartDown.getDescription().setEnabled(false);
@@ -1123,8 +1015,8 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
     private void sample_show() { //метод для отображения времени и дистанции по клику или при фиксировании выборки
 
-        TextView timesample = (TextView) findViewById(R.id.timesample);
-        TextView distancesample = (TextView) findViewById(R.id.distancesample);
+        TextView timesample = findViewById(R.id.timesample);
+        TextView distancesample = findViewById(R.id.distancesample);
 
         if (ram_begin != -1 && ram_end != 0) { //если зафиксирована выборка
             double start = 0;
@@ -1170,81 +1062,20 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     }
 
     private double Find_Time(double point) { //метод поиска времени по дистанции
-        RowerDBHelper mDBHelper = new RowerDBHelper(this);
-        SQLiteDatabase db = mDBHelper.getReadableDatabase();
-        Cursor cursor = null;
-        String[] projection1 = {
-                RowerData.COLUMN_TIME
-        };
-        String selection_begin1 = RowerData.COLUMN_DISTANCE + " BETWEEN " + (point - 0.1) + " AND " + (point + 0.1);
-
-        cursor = db.query(
-                RowerData.TABLE_NAME,  // таблица
-                projection1,            // столбцы
-                selection_begin1,             // столбцы для условия WHERE
-                null,         // значения для условия WHERE
-                null,                  // Don't group the rows
-                null,                  // Don't filter by row groups
-                null                   // порядок сортировки
-        );
-
-        if (cursor != null && cursor.moveToNext()) {
-            correct_time = cursor.getDouble(cursor.getColumnIndex(RowerData.COLUMN_TIME));
-        }
-        cursor.close();
-        db.close();
-        mDBHelper.close();
-        return correct_time;
+        return correct_time = rowerDBHelper.getTime(point);
     }
 
-
     private double Find_Distance(double point) { //метод поиска дистанции по времени
-        RowerDBHelper mDBHelper = new RowerDBHelper(this);
-        SQLiteDatabase db = mDBHelper.getReadableDatabase();
-        Cursor cursor = null;
-        String[] projection = {
-                RowerData.COLUMN_DISTANCE
-        };
-
-        String selection_begin = RowerData.COLUMN_TIME + " BETWEEN " + (point - 10) + " AND " + (point + 10);
-
-        cursor = db.query(
-                RowerData.TABLE_NAME,  // таблица
-                projection,            // столбцы
-                selection_begin,             // столбцы для условия WHERE
-                null,         // значения для условия WHERE
-                null,                  // Don't group the rows
-                null,                  // Don't filter by row groups
-                null                   // порядок сортировки
-        );
-
-        if (cursor != null && cursor.moveToNext()) {
-            correct_distance = cursor.getDouble(cursor.getColumnIndex(RowerData.COLUMN_DISTANCE));
-        }
-        cursor.close();
-        db.close();
-        mDBHelper.close();
-        return correct_distance;
+        return correct_distance = rowerDBHelper.getDistance(point);
     }
 
     private void ButtonSelect(Button button){ //метод выбора кнопки
         button.setTextColor(getResources().getColor(R.color.colorPrimary));
         button.setTypeface(null, Typeface.BOLD);
-        if (textsize == 10){
-            button.setTextSize(textsize);
-        }else {
-            button.setTextSize(textsize + 2);
-        }
-
     }
 
     private void ButtonNoNSelect(Button button){ //метод снятия выбора с кнопки
         button.setTextColor(getResources().getColor(R.color.colorBlack));
         button.setTypeface(null, Typeface.NORMAL);
-        if (textsize == 10){
-            button.setTextSize(textsize - 2);
-        }else {
-            button.setTextSize(textsize);
-        }
     }
 }
