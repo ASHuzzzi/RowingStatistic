@@ -22,21 +22,21 @@ import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
 
 public class Parser {
 
-    private String fileName;
+    private String fileLocation;
     private String fileNumber;
     private Context context;
 
-    public Parser(Context context, String fileName, String fileNumber) {
+    public Parser(Context context, String fileLocation, String fileNumber) {
         this.context = context;
-        this.fileName = fileName;
+        this.fileLocation = fileLocation;
         this.fileNumber = fileNumber;
     }
 
     public void parseFile() {
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+            BufferedReader reader = new BufferedReader(new FileReader(fileLocation));
             if (reader.ready()) {
-                Log.d("LoadFile", "Старт загрузки");
+                Log.d("LoadFile", "Старт загрузки " + fileNumber + " спортсмена");
                 String rowForScanner;
                 boolean isIncorrectRow = false;
                 int lineInFile = 0;
@@ -133,7 +133,7 @@ public class Parser {
                 reader.close();
                 RowerDBHelper rowerDBHelper = new RowerDBHelper(context);
                 rowerDBHelper.saveData(listForDB);
-                Log.d("LoadFile", "Окончание загрузки");
+                Log.d("LoadFile", "Окончание загрузки " + fileNumber + " спортсмена");
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();

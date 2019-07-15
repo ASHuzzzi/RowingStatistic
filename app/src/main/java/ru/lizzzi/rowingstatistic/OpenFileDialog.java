@@ -18,7 +18,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -44,7 +43,7 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
 
     private String currentPath = Environment.getExternalStorageDirectory().getPath();
     private List<File> files = new ArrayList<File>();
-    private TextView title;
+    private TextView titleText;
     private ListView listView;
     private FilenameFilter filenameFilter;
     private int selectedIndex = -1;
@@ -57,19 +56,18 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
     public static final String APP_PREFERENCES = "lastdir";
     public static final String APP_PREFERENCES_COUNTER = "counter";
     public static final String APP_PREFERENCES_DIR = "dir";
-    private SharedPreferences mSettings;
+    private SharedPreferences sharedPreferences;
 
 
     public interface OpenDialogListener {
-        public void OnSelectedFile(String fileName, String file) throws IOException, ParseException;
+        void OnSelectedFile(String fileName, String file) throws IOException, ParseException;
     }
 
     private class FileAdapter extends ArrayAdapter<File> {
 
         public FileAdapter(Context context, List<File> files) {
             super(context, android.R.layout.simple_list_item_1, files);
-
-            mSettings = this.getContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+            sharedPreferences = this.getContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
         }
 
 
@@ -110,28 +108,31 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
     public OpenFileDialog(final Context context) {
         super(context);
         isOnlyFoldersFilter = false;
-        title = createTitle(context);
+        titleText = createTitle(context);
         changeTitle();
         LinearLayout linearLayout = createMainLayout(context);
         linearLayout.addView(createBackItem(context));
         listView = createListView(context);
         linearLayout.addView(listView);
-        setCustomTitle(title)
+        setCustomTitle(titleText)
                 .setView(linearLayout)
                 .setPositiveButton(R.string.open, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (selectedIndex > -1 && listener != null) {
                             try {
-                                listener.OnSelectedFile(listView.getItemAtPosition(selectedIndex).toString(), currentPath);
+                                listener.OnSelectedFile(
+                                        listView.getItemAtPosition(selectedIndex).toString(),
+                                        currentPath);
                                 dire = currentPath;
-                                mSettings = getContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
-                                String counter = mSettings.getString(APP_PREFERENCES_COUNTER, "");
-                                if (counter.equals("0")){
-                                    SharedPreferences.Editor editor = mSettings.edit();
-                                    editor.putString(APP_PREFERENCES_COUNTER, "1");
-                                    editor.putString(APP_PREFERENCES_DIR, currentPath);
-                                    editor.apply();
+                                sharedPreferences = getContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+                                int counter = sharedPreferences
+                                        .getInt(APP_PREFERENCES_COUNTER, 0);
+                                if (counter == 0) {
+                                    sharedPreferences.edit()
+                                            .putInt(APP_PREFERENCES_COUNTER, 1)
+                                            .putString(APP_PREFERENCES_DIR, currentPath)
+                                            .apply();
                                 }
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -155,10 +156,10 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         //в случае отмены, в следующий раз окно открет папку по умолчанию.
-                        SharedPreferences.Editor editor = mSettings.edit();
-                        editor.putString(APP_PREFERENCES_COUNTER, "0");
-                        editor.putString(APP_PREFERENCES_DIR, currentPath);
-                        editor.apply();
+                        sharedPreferences.edit()
+                                .putInt(APP_PREFERENCES_COUNTER, 0)
+                                .putString(APP_PREFERENCES_DIR, currentPath)
+                                .apply();
                     }
                 });
 
@@ -275,10 +276,10 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
 
             @Override
             public void onClick(View view) {
-                SharedPreferences.Editor editor = mSettings.edit();
-                editor.putString(APP_PREFERENCES_COUNTER, "0");
-                editor.putString(APP_PREFERENCES_DIR, currentPath);
-                editor.apply();
+                sharedPreferences.edit()
+                        .putInt(APP_PREFERENCES_COUNTER, 0)
+                        .putString(APP_PREFERENCES_DIR, currentPath)
+                        .apply();
                 File file = new File(currentPath);
                 File parentDirectory = file.getParentFile();
                 if (parentDirectory != null) {
@@ -300,31 +301,31 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
         String titleText = currentPath;
         int screenWidth = getScreenSize(getContext()).x;
         int maxWidth = (int) (screenWidth * 0.99);
-        if (getTextWidth(titleText, title.getPaint()) > maxWidth) {
-            while (getTextWidth("..." + titleText, title.getPaint()) > maxWidth) {
+        if (getTextWidth(titleText, this.titleText.getPaint()) > maxWidth) {
+            while (getTextWidth("..." + titleText, this.titleText.getPaint()) > maxWidth) {
                 int start = titleText.indexOf("/", 2);
-                if (start > 0)
-                    titleText = titleText.substring(start);
-                else
-                    titleText = titleText.substring(2);
+                titleText = (start > 0)
+                        ? titleText.substring(start)
+                        : titleText.substring(2);
             }
-            title.setText("..." + titleText);
+            this.titleText.setText("..." + titleText);
         } else {
-            title.setText(titleText);
+            this.titleText.setText(titleText);
         }
     }
 
     private List<File> getFiles(String directoryPath) {
-        mSettings = this.getContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
-        String counter = mSettings.getString(APP_PREFERENCES_COUNTER, "");
+        sharedPreferences = this.getContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+        int counter = sharedPreferences.getInt(APP_PREFERENCES_COUNTER, 0);
         File directory = new File(directoryPath);
-        if (counter.equals("1")){
-            String directoryPathBM = mSettings.getString(APP_PREFERENCES_DIR, "");
+        if (counter == 1) {
+            String directoryPathBM = sharedPreferences.getString(APP_PREFERENCES_DIR, "");
             directory = new File(directoryPathBM);
         }
         File[] list = directory.listFiles(filenameFilter);
-        if(list == null)
+        if(list == null) {
             list = new File[]{};
+        }
         List<File> fileList = Arrays.asList(list);
         Collections.sort(fileList, new Comparator<File>() {
             @Override
@@ -368,10 +369,7 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
                     currentPath = file.getPath();
                     RebuildFiles(adapter);
                 } else {
-                    if (index != selectedIndex)
-                        selectedIndex = index;
-                    else
-                        selectedIndex = -1;
+                    selectedIndex = (index != selectedIndex) ? index : -1;
                     adapter.notifyDataSetChanged();
                 }
             }

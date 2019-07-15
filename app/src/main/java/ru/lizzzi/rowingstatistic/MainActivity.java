@@ -7,13 +7,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -21,14 +23,16 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Boolean> {
 
     //файл с полями для запоминания последней открытой папки
     public static final String APP_PREFERENCES = "lastdir";
     public static final String APP_PREFERENCES_COUNTER = "counter";
-    private SharedPreferences sharedPreferences;
 
     //файл для сохранения настоек для построения графиков
     public static final String APP_PREFERENCES_Chart = "chart_settings";
@@ -51,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String APP_PREFERENCES_CHART_DISTATNCE_MIN = "distatncemin";
     private SharedPreferences sharedPreferencesCharts;
 
-    private int fileNumber = 0; //переменная для подсчета кол-ва открытых файлов
+    private int numberOfLoadedFiles = 0; //переменная для подсчета кол-ва открытых файлов
 
     public static final int NUMBER_OF_REQUEST = 23401;
     private RowerDBHelper mDBHelper;
@@ -59,6 +63,10 @@ public class MainActivity extends AppCompatActivity {
     private Button buttonDistance;
     private Button buttonTime;
     private String loadedFile;
+    private ProgressDialog mProgressDialog;
+    private List<String> queueOnLoad = new ArrayList<>();
+    private Loader fileLoader;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         buttonFileExplorer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                if (fileNumber < 8) { //проверка на макисмальное количество файлов
+                if (numberOfLoadedFiles < 8) { //проверка на макисмальное количество файлов
                     final OpenFileDialog fileDialog = new OpenFileDialog(v.getContext())
                             .setFilter(".*\\.csv")
                             .setOpenDialogListener(new OpenFileDialog.OpenDialogListener() {
@@ -99,8 +107,10 @@ public class MainActivity extends AppCompatActivity {
                                 public void OnSelectedFile(String fileName, String file) {
                                     if (!fileName.equals(loadedFile)) {
                                         loadedFile = fileName;
-                                        LoadData loadData = new LoadData();
-                                        loadData.execute(fileName);
+                                        queueOnLoad.add(fileName);
+                                        if (fileLoader == null || !fileLoader.isStarted()) {
+                                            startFileLoaders();
+                                        }
                                     }else {
                                         toastShow("Вы выбрали уже загруженный файл");
                                     }
@@ -112,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mProgressDialog = new ProgressDialog(MainActivity.this);
     }
 
     @Override
@@ -179,12 +191,13 @@ public class MainActivity extends AppCompatActivity {
     public void onDestroy(){
         super.onDestroy();
         //присваеваем 0 для сброса запомненой папки в классе OpenFileDialog
-        sharedPreferences = this.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
-        sharedPreferences.edit().putString(APP_PREFERENCES_COUNTER, "0").apply();
+        SharedPreferences sharedPreferences =
+                this.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+        sharedPreferences.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
     }
 
     public void ShowChartClick(View view){ //собираем данные, готовим их для построения графиоков
-        if (fileNumber > 0) {
+        if (numberOfLoadedFiles > 0) {
             EditText chartName1 = findViewById(R.id.Chart1_New_Name);
             EditText chartName2 = findViewById(R.id.Chart2_New_Name);
             EditText chartName3 = findViewById(R.id.Chart3_New_Name);
@@ -196,32 +209,32 @@ public class MainActivity extends AppCompatActivity {
 
             sharedPreferencesCharts.edit().putInt(
                     APP_PREFERENCES_BACK,
-                    fileNumber).apply();
+                    numberOfLoadedFiles).apply();
 
             //считываем названия графиков
             boolean chartsHaveName = false;
-            if (fileNumber > 0) {
+            if (numberOfLoadedFiles > 0) {
                 chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME1, chartName1);
             }
-            if (fileNumber > 1) {
+            if (numberOfLoadedFiles > 1) {
                 chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME2, chartName2);
             }
-            if (fileNumber > 2) {
+            if (numberOfLoadedFiles > 2) {
                 chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME3, chartName3);
             }
-            if (fileNumber > 3) {
+            if (numberOfLoadedFiles > 3) {
                 chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME4, chartName4);
             }
-            if (fileNumber > 4){
+            if (numberOfLoadedFiles > 4){
                 chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME5, chartName5);
             }
-            if (fileNumber > 5) {
+            if (numberOfLoadedFiles > 5) {
                 chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME6, chartName6);
             }
-            if (fileNumber > 6) {
+            if (numberOfLoadedFiles > 6) {
                 chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME7, chartName7);
             }
-            if (fileNumber > 7) {
+            if (numberOfLoadedFiles > 7) {
                 chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME8, chartName8);
             }
             if (chartsHaveName) {
@@ -290,70 +303,78 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    class LoadData extends AsyncTask<String, Void, Void> {
-
-        ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
-
-        @Override
-        protected void onPreExecute(){
-            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            mProgressDialog.setMessage("Загружаю. Подождите...");
-            mProgressDialog.show();
+    private void startFileLoaders() {
+        /*mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        mProgressDialog.setMessage("Загружаю. Подождите...");
+        mProgressDialog.show();*/
+        if (queueOnLoad.size() > 0) {
+            //toastShow("Загружаю " + numberOfLoadedFiles );
+            Log.d(
+                    "LoadFile",
+                    "Старт загрузчика для " + numberOfLoadedFiles + " спортсмена");
+            Bundle bundle = new Bundle();
+            bundle.putString("fileLocation", queueOnLoad.get(0));
+            bundle.putString("fileNumber", String.valueOf(numberOfLoadedFiles));
+            fileLoader = getSupportLoaderManager().initLoader(
+                    numberOfLoadedFiles,
+                    bundle,
+                    this);
+            fileLoader.forceLoad();
         }
+    }
 
+    @NonNull
+    @Override
+    public Loader<Boolean> onCreateLoader(int loaderId, Bundle bundle) {
+        return new FileLoader(this, bundle);
+    }
 
-        @Override
-        protected Void doInBackground(String... urls) {
-            Parser parser = new Parser(
-                    getApplicationContext(),
-                    String.valueOf(urls[0]),
-                    String.valueOf(fileNumber));
-            parser.parseFile();
-            return null;
+    @Override
+    public void onLoadFinished(@NonNull Loader<Boolean> loader, Boolean aBoolean) {
+        numberOfLoadedFiles++;
+        final LinearLayout LL_Chart1 = findViewById(R.id.LL_Chart1);
+        final LinearLayout LL_Chart2 = findViewById(R.id.LL_Chart2);
+        final LinearLayout LL_Chart3 = findViewById(R.id.LL_Chart3);
+        final LinearLayout LL_Chart4 = findViewById(R.id.LL_Chart4);
+        final LinearLayout LL_Chart5 = findViewById(R.id.LL_Chart5);
+        final LinearLayout LL_Chart6 = findViewById(R.id.LL_Chart6);
+        final LinearLayout LL_Chart7 = findViewById(R.id.LL_Chart7);
+        final LinearLayout LL_Chart8 = findViewById(R.id.LL_Chart8);
+
+        if (numberOfLoadedFiles >0){
+            LL_Chart1.setVisibility(View.VISIBLE);
         }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
-
-            final LinearLayout LL_Chart1 = findViewById(R.id.LL_Chart1);
-            final LinearLayout LL_Chart2 = findViewById(R.id.LL_Chart2);
-            final LinearLayout LL_Chart3 = findViewById(R.id.LL_Chart3);
-            final LinearLayout LL_Chart4 = findViewById(R.id.LL_Chart4);
-            final LinearLayout LL_Chart5 = findViewById(R.id.LL_Chart5);
-            final LinearLayout LL_Chart6 = findViewById(R.id.LL_Chart6);
-            final LinearLayout LL_Chart7 = findViewById(R.id.LL_Chart7);
-            final LinearLayout LL_Chart8 = findViewById(R.id.LL_Chart8);
-
-            fileNumber++;
-
-            if (fileNumber >0){
-                LL_Chart1.setVisibility(View.VISIBLE);
-            }
-            if (fileNumber >1){
-                LL_Chart2.setVisibility(View.VISIBLE);
-            }
-            if (fileNumber >2){
-                LL_Chart3.setVisibility(View.VISIBLE);
-            }
-            if (fileNumber >3){
-                LL_Chart4.setVisibility(View.VISIBLE);
-            }
-            if (fileNumber >4){
-                LL_Chart5.setVisibility(View.VISIBLE);
-            }
-            if (fileNumber >5){
-                LL_Chart6.setVisibility(View.VISIBLE);
-            }
-            if (fileNumber >6){
-                LL_Chart7.setVisibility(View.VISIBLE);
-            }
-            if (fileNumber >7){
-                LL_Chart8.setVisibility(View.VISIBLE);
-            }
-            mProgressDialog.hide();
-            toastShow("Файл загружен");
+        if (numberOfLoadedFiles >1){
+            LL_Chart2.setVisibility(View.VISIBLE);
         }
+        if (numberOfLoadedFiles >2){
+            LL_Chart3.setVisibility(View.VISIBLE);
+        }
+        if (numberOfLoadedFiles >3){
+            LL_Chart4.setVisibility(View.VISIBLE);
+        }
+        if (numberOfLoadedFiles >4){
+            LL_Chart5.setVisibility(View.VISIBLE);
+        }
+        if (numberOfLoadedFiles >5){
+            LL_Chart6.setVisibility(View.VISIBLE);
+        }
+        if (numberOfLoadedFiles >6){
+            LL_Chart7.setVisibility(View.VISIBLE);
+        }
+        if (numberOfLoadedFiles >7){
+            LL_Chart8.setVisibility(View.VISIBLE);
+        }
+        mProgressDialog.hide();
+        Log.d("LoadFile", "Стоп загрузчика для " + loader.getId() + " спортсмена");
+        queueOnLoad.remove(0);
+        startFileLoaders();
+        toastShow("Файл загружен " + loader.getId() );
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Boolean> loader) {
+
     }
 
     private void toastShow(String textToShow) {
