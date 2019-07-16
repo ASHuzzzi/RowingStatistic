@@ -268,7 +268,7 @@ public class OpenFileDialog extends AlertDialog.Builder { //вспомогате
     private TextView createBackItem(Context context) {
         TextView textView = createTextView(context, android.R.style.TextAppearance_DeviceDefault_Small);
         //Drawable drawable = getContext().getResources().getDrawable(android.R.drawable.ic_menu_directions);
-        Drawable drawable = getContext().getResources().getDrawable(R.drawable.forward);
+        Drawable drawable = getContext().getResources().getDrawable(R.drawable.arrow_forward);
         drawable.setBounds(0, 0, 60, 60);
         textView.setCompoundDrawables(drawable, null, null, null);
         textView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));

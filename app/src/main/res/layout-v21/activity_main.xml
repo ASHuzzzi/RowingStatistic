@@ -293,7 +293,6 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@android:drawable/btn_default"
-                android:onClick="ShowChartClick"
                 android:text="@string/build_chart"
                 tools:ignore="ButtonStyle" />
 

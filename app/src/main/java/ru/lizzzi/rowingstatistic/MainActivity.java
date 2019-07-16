@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private Button buttonDistance;
     private Button buttonTime;
+    private Button buttonShowChart;
     private String loadedFile;
     private ProgressDialog mProgressDialog;
     private List<String> queueOnLoad = new ArrayList<>();
@@ -119,6 +120,63 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     fileDialog.show();
                 } else {
                     toastShow("Загружено максимальное количество файлов!");
+                }
+            }
+        });
+
+        buttonShowChart = findViewById(R.id.button11);
+        buttonShowChart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (numberOfLoadedFiles > 0) {
+                    EditText chartName1 = findViewById(R.id.Chart1_New_Name);
+                    EditText chartName2 = findViewById(R.id.Chart2_New_Name);
+                    EditText chartName3 = findViewById(R.id.Chart3_New_Name);
+                    EditText chartName4 = findViewById(R.id.Chart4_New_Name);
+                    EditText chartName5 = findViewById(R.id.Chart5_New_Name);
+                    EditText chartName6 = findViewById(R.id.Chart6_New_Name);
+                    EditText chartName7 = findViewById(R.id.Chart7_New_Name);
+                    EditText chartName8 = findViewById(R.id.Chart8_New_Name);
+
+                    sharedPreferencesCharts.edit().putInt(
+                            APP_PREFERENCES_BACK,
+                            numberOfLoadedFiles).apply();
+
+                    //считываем названия графиков
+                    boolean chartsHaveName = false;
+                    if (numberOfLoadedFiles > 0) {
+                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME1, chartName1);
+                    }
+                    if (numberOfLoadedFiles > 1) {
+                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME2, chartName2);
+                    }
+                    if (numberOfLoadedFiles > 2) {
+                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME3, chartName3);
+                    }
+                    if (numberOfLoadedFiles > 3) {
+                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME4, chartName4);
+                    }
+                    if (numberOfLoadedFiles > 4){
+                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME5, chartName5);
+                    }
+                    if (numberOfLoadedFiles > 5) {
+                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME6, chartName6);
+                    }
+                    if (numberOfLoadedFiles > 6) {
+                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME7, chartName7);
+                    }
+                    if (numberOfLoadedFiles > 7) {
+                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME8, chartName8);
+                    }
+                    if (chartsHaveName) {
+                        getBoundaryValues(); //получаем границы для графиков
+                        Intent intent = new Intent(MainActivity.this, ChartActivity.class);
+                        startActivity(intent);
+                    } else {
+                        toastShow("Не у всех графиков есть название!");
+                    }
+                } else {
+                    toastShow("Вы не загрузили ни один из файлов!");
                 }
             }
         });
@@ -194,59 +252,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         SharedPreferences sharedPreferences =
                 this.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
         sharedPreferences.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
-    }
-
-    public void ShowChartClick(View view){ //собираем данные, готовим их для построения графиоков
-        if (numberOfLoadedFiles > 0) {
-            EditText chartName1 = findViewById(R.id.Chart1_New_Name);
-            EditText chartName2 = findViewById(R.id.Chart2_New_Name);
-            EditText chartName3 = findViewById(R.id.Chart3_New_Name);
-            EditText chartName4 = findViewById(R.id.Chart4_New_Name);
-            EditText chartName5 = findViewById(R.id.Chart5_New_Name);
-            EditText chartName6 = findViewById(R.id.Chart6_New_Name);
-            EditText chartName7 = findViewById(R.id.Chart7_New_Name);
-            EditText chartName8 = findViewById(R.id.Chart8_New_Name);
-
-            sharedPreferencesCharts.edit().putInt(
-                    APP_PREFERENCES_BACK,
-                    numberOfLoadedFiles).apply();
-
-            //считываем названия графиков
-            boolean chartsHaveName = false;
-            if (numberOfLoadedFiles > 0) {
-                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME1, chartName1);
-            }
-            if (numberOfLoadedFiles > 1) {
-                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME2, chartName2);
-            }
-            if (numberOfLoadedFiles > 2) {
-                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME3, chartName3);
-            }
-            if (numberOfLoadedFiles > 3) {
-                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME4, chartName4);
-            }
-            if (numberOfLoadedFiles > 4){
-                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME5, chartName5);
-            }
-            if (numberOfLoadedFiles > 5) {
-                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME6, chartName6);
-            }
-            if (numberOfLoadedFiles > 6) {
-                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME7, chartName7);
-            }
-            if (numberOfLoadedFiles > 7) {
-                chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME8, chartName8);
-            }
-            if (chartsHaveName) {
-                getBoundaryValues(); //получаем границы для графиков
-                Intent intent = new Intent(MainActivity.this, ChartActivity.class);
-                startActivity(intent);
-            } else {
-                toastShow("Не у всех графиков есть название!");
-            }
-        } else {
-            toastShow("Вы не загрузили ни один из файлов!");
-        }
     }
 
     private boolean saveChartName(String preferencesKey, EditText editText) {
