@@ -72,7 +72,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/empty" />
+                android:text="@string/emptyText" />
 
             <TextView
                 android:id="@+id/distancesample"
@@ -80,7 +80,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/empty" />
+                android:text="@string/emptyText" />
         </LinearLayout>
 
         <TextView

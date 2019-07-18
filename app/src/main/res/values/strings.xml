@@ -11,9 +11,9 @@
     <string name="time">Времени</string>
     <string name="distance">Дистанции</string>
 
-    <string name="da_load_chart_name">Введите название графика</string>
-    <string name="result_filename">Введите имя файла</string>
-    <string name="da_cooment_result">Комментарий для периода</string>
+    <string name="enterChartName">Введите название графика</string>
+    <string name="enterFileName">Введите имя файла</string>
+    <string name="enterCommentForPeriod">Комментарий для периода</string>
 
     <string name="chart_info">Построить график по:</string>
     <string name="name_chart">Названия графиков</string>
@@ -26,8 +26,10 @@
     <string name="name_chart7">График 7</string>
     <string name="name_chart8">График 8</string>
     <string name="build_chart">Построить график</string>
-    <string name="empty"> </string>
+    <string name="emptyText"> </string>
 
     <string name="open">Открыть</string>
+
+    <string name="chartCaption">График </string>
 
 </resources>

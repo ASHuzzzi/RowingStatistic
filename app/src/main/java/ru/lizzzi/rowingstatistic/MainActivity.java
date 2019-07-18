@@ -1,7 +1,6 @@
 package ru.lizzzi.rowingstatistic;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,12 +14,12 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -62,12 +61,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private Button buttonDistance;
     private Button buttonTime;
-    private Button buttonShowChart;
     private String loadedFile;
-    private ProgressDialog mProgressDialog;
     private List<String> queueOnLoad = new ArrayList<>();
-    private Loader fileLoader;
-
+    private RecyclerView recyclerView;
+    private Adapter adapter;
+    private List<String> rowersList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,10 +107,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                                     if (!fileName.equals(loadedFile)) {
                                         loadedFile = fileName;
                                         queueOnLoad.add(fileName);
-                                        if (fileLoader == null || !fileLoader.isStarted()) {
-                                            startFileLoaders();
-                                        }
-                                    }else {
+                                        rowersList.add("Load");
+                                        startFileLoaders();
+                                    } else {
                                         toastShow("Вы выбрали уже загруженный файл");
                                     }
                                 }
@@ -124,64 +121,45 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
-        buttonShowChart = findViewById(R.id.button11);
+        Button buttonShowChart = findViewById(R.id.button11);
         buttonShowChart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (numberOfLoadedFiles > 0) {
-                    EditText chartName1 = findViewById(R.id.Chart1_New_Name);
-                    EditText chartName2 = findViewById(R.id.Chart2_New_Name);
-                    EditText chartName3 = findViewById(R.id.Chart3_New_Name);
-                    EditText chartName4 = findViewById(R.id.Chart4_New_Name);
-                    EditText chartName5 = findViewById(R.id.Chart5_New_Name);
-                    EditText chartName6 = findViewById(R.id.Chart6_New_Name);
-                    EditText chartName7 = findViewById(R.id.Chart7_New_Name);
-                    EditText chartName8 = findViewById(R.id.Chart8_New_Name);
-
-                    sharedPreferencesCharts.edit().putInt(
-                            APP_PREFERENCES_BACK,
-                            numberOfLoadedFiles).apply();
-
-                    //считываем названия графиков
-                    boolean chartsHaveName = false;
-                    if (numberOfLoadedFiles > 0) {
-                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME1, chartName1);
-                    }
+                    SharedPreferences.Editor editor = sharedPreferencesCharts.edit();
+                    editor.putInt(APP_PREFERENCES_BACK, numberOfLoadedFiles)
+                            .putString(APP_PREFERENCES_CHART_NAME1, rowersList.get(0));
                     if (numberOfLoadedFiles > 1) {
-                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME2, chartName2);
+                        editor.putString(APP_PREFERENCES_CHART_NAME2, rowersList.get(1));
                     }
                     if (numberOfLoadedFiles > 2) {
-                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME3, chartName3);
+                        editor.putString(APP_PREFERENCES_CHART_NAME3, rowersList.get(2));
                     }
                     if (numberOfLoadedFiles > 3) {
-                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME4, chartName4);
+                        editor.putString(APP_PREFERENCES_CHART_NAME4, rowersList.get(3));
                     }
                     if (numberOfLoadedFiles > 4){
-                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME5, chartName5);
+                        editor.putString(APP_PREFERENCES_CHART_NAME5, rowersList.get(4));
                     }
                     if (numberOfLoadedFiles > 5) {
-                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME6, chartName6);
+                        editor.putString(APP_PREFERENCES_CHART_NAME6, rowersList.get(5));
                     }
                     if (numberOfLoadedFiles > 6) {
-                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME7, chartName7);
+                        editor.putString(APP_PREFERENCES_CHART_NAME7, rowersList.get(6));
                     }
                     if (numberOfLoadedFiles > 7) {
-                        chartsHaveName = saveChartName(APP_PREFERENCES_CHART_NAME8, chartName8);
+                        editor.putString(APP_PREFERENCES_CHART_NAME8, rowersList.get(7));
                     }
-                    if (chartsHaveName) {
-                        getBoundaryValues(); //получаем границы для графиков
-                        Intent intent = new Intent(MainActivity.this, ChartActivity.class);
-                        startActivity(intent);
-                    } else {
-                        toastShow("Не у всех графиков есть название!");
-                    }
+                    editor.apply();
+                    getBoundaryValues(); //получаем границы для графиков
+                    Intent intent = new Intent(MainActivity.this, ChartActivity.class);
+                    startActivity(intent);
                 } else {
                     toastShow("Вы не загрузили ни один из файлов!");
                 }
             }
         });
-
-        mProgressDialog = new ProgressDialog(MainActivity.this);
+        recyclerView = findViewById(R.id.recyclerView);
     }
 
     @Override
@@ -254,17 +232,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         sharedPreferences.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
     }
 
-    private boolean saveChartName(String preferencesKey, EditText editText) {
-        if (editText.getText().length() != 0) {
-            sharedPreferencesCharts.edit().putString(
-                    preferencesKey,
-                    editText.getText().toString()).apply();
-            return true;
-        }
-        return false;
-    }
-
     private void getBoundaryValues() { //получаем границы для графиков, max/min скорости и дистанции
+        Log.d(
+                "LoadFile",
+                "Граничные условия: Начало");
         sharedPreferencesCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferencesCharts.edit();
         editor.putFloat(
@@ -289,6 +260,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 APP_PREFERENCES_CHART_DISTATNCE_MIN,
                 mDBHelper.getMinDistance());
         editor.apply();
+        Log.d(
+                "LoadFile",
+                "Граничные условия: Конец");
     }
 
     private void ButtonSelect(Button button){ //метод выбора кнопки
@@ -309,18 +283,23 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     private void startFileLoaders() {
-        /*mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        mProgressDialog.setMessage("Загружаю. Подождите...");
-        mProgressDialog.show();*/
         if (queueOnLoad.size() > 0) {
-            //toastShow("Загружаю " + numberOfLoadedFiles );
+            if (rowersList.size() == 1) {
+                adapter = new Adapter(this, rowersList);
+                LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+                recyclerView.setLayoutManager(layoutManager);
+                recyclerView.setAdapter(adapter);
+
+            } else {
+                adapter.notifyDataSetChanged();
+            }
             Log.d(
                     "LoadFile",
                     "Старт загрузчика для " + numberOfLoadedFiles + " спортсмена");
             Bundle bundle = new Bundle();
             bundle.putString("fileLocation", queueOnLoad.get(0));
             bundle.putString("fileNumber", String.valueOf(numberOfLoadedFiles));
-            fileLoader = getSupportLoaderManager().initLoader(
+            Loader fileLoader = getSupportLoaderManager().initLoader(
                     numberOfLoadedFiles,
                     bundle,
                     this);
@@ -337,40 +316,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     public void onLoadFinished(@NonNull Loader<Boolean> loader, Boolean aBoolean) {
         numberOfLoadedFiles++;
-        final LinearLayout LL_Chart1 = findViewById(R.id.LL_Chart1);
-        final LinearLayout LL_Chart2 = findViewById(R.id.LL_Chart2);
-        final LinearLayout LL_Chart3 = findViewById(R.id.LL_Chart3);
-        final LinearLayout LL_Chart4 = findViewById(R.id.LL_Chart4);
-        final LinearLayout LL_Chart5 = findViewById(R.id.LL_Chart5);
-        final LinearLayout LL_Chart6 = findViewById(R.id.LL_Chart6);
-        final LinearLayout LL_Chart7 = findViewById(R.id.LL_Chart7);
-        final LinearLayout LL_Chart8 = findViewById(R.id.LL_Chart8);
-
-        if (numberOfLoadedFiles >0){
-            LL_Chart1.setVisibility(View.VISIBLE);
-        }
-        if (numberOfLoadedFiles >1){
-            LL_Chart2.setVisibility(View.VISIBLE);
-        }
-        if (numberOfLoadedFiles >2){
-            LL_Chart3.setVisibility(View.VISIBLE);
-        }
-        if (numberOfLoadedFiles >3){
-            LL_Chart4.setVisibility(View.VISIBLE);
-        }
-        if (numberOfLoadedFiles >4){
-            LL_Chart5.setVisibility(View.VISIBLE);
-        }
-        if (numberOfLoadedFiles >5){
-            LL_Chart6.setVisibility(View.VISIBLE);
-        }
-        if (numberOfLoadedFiles >6){
-            LL_Chart7.setVisibility(View.VISIBLE);
-        }
-        if (numberOfLoadedFiles >7){
-            LL_Chart8.setVisibility(View.VISIBLE);
-        }
-        mProgressDialog.hide();
+        rowersList.set(loader.getId(), "Гребец " + numberOfLoadedFiles);
+        adapter.notifyDataSetChanged();
         Log.d("LoadFile", "Стоп загрузчика для " + loader.getId() + " спортсмена");
         queueOnLoad.remove(0);
         startFileLoaders();

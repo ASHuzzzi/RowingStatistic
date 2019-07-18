@@ -148,7 +148,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         super.onStart();
         //получаем значения из файла chart_settings
         mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-        countOpenFiles = mCharts.getInt(APP_PREFERENCES_BACK, 1);
+        countOpenFiles = mCharts.getInt(APP_PREFERENCES_BACK, 0);
         timeF_distanceT = (mCharts.getInt(APP_PREFERENCES_TYPE_CHART, 0));
         max_power = mCharts.getInt(APP_PREFERENCES_CHART_POWER, 0);
         max_absolut = mCharts.getFloat(APP_PREFERENCES_CHART_SPEED, 0);

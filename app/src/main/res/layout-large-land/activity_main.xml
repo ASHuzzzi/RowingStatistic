@@ -6,17 +6,14 @@
     android:layout_height="match_parent"
     android:background="@color/colorWhite"
     android:orientation="horizontal"
-    android:baselineAligned="false">
+    android:baselineAligned="false"
+    android:padding="10dp">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="3"
-        android:orientation="vertical"
-        android:layout_marginTop="20dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginBottom="10dp">
+        android:orientation="vertical">
 
         <Button
             android:id="@+id/buttonFileExplorer"
@@ -69,238 +66,21 @@
             tools:ignore="ButtonStyle" />
     </RelativeLayout>
 
-    <LinearLayout
+    <View
+        android:layout_width="2dp"
+        android:layout_height="wrap_content"
+        android:background="@color/colorAccent"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginRight="5dp">
+
+    </View>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/textview1"
-            style="@style/CaptionText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="0dp"
-            android:text="@string/name_chart"
-            android:textSize="@dimen/txt_size_14" />
-
-        <LinearLayout
-            android:id="@+id/LL_Chart1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="invisible">
-
-            <TextView
-                android:id="@+id/Chart1_Old_Name"
-                style="@style/TV_for_Old_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/name_chart1" />
-
-            <EditText
-                android:id="@+id/Chart1_New_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:ems="10"
-                android:inputType="textPersonName"
-                android:text="@string/name_chart1"
-                android:textSize="@dimen/txt_size_14"
-                tools:ignore="LabelFor" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/LL_Chart2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="invisible">
-
-            <TextView
-                android:id="@+id/Chart2_Old_Name"
-                style="@style/TV_for_Old_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/name_chart2" />
-
-            <EditText
-                android:id="@+id/Chart2_New_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:ems="10"
-                android:inputType="textPersonName"
-                android:text="@string/name_chart2"
-                android:textSize="@dimen/txt_size_14"
-                tools:ignore="LabelFor" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/LL_Chart3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="invisible">
-
-            <TextView
-                android:id="@+id/Chart3_Old_Name"
-                style="@style/TV_for_Old_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/name_chart3" />
-
-            <EditText
-                android:id="@+id/Chart3_New_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:ems="10"
-                android:inputType="textPersonName"
-                android:text="@string/name_chart3"
-                android:textSize="@dimen/txt_size_14"
-                tools:ignore="LabelFor" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/LL_Chart4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="invisible">
-
-            <TextView
-                android:id="@+id/Chart4_Old_Name"
-                style="@style/TV_for_Old_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/name_chart4" />
-
-            <EditText
-                android:id="@+id/Chart4_New_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:ems="10"
-                android:inputType="textPersonName"
-                android:text="@string/name_chart4"
-                android:textSize="@dimen/txt_size_14"
-                tools:ignore="LabelFor" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/LL_Chart5"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="invisible">
-
-            <TextView
-                android:id="@+id/Chart5_Old_Name"
-                style="@style/TV_for_Old_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/name_chart5" />
-
-            <EditText
-                android:id="@+id/Chart5_New_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:ems="10"
-                android:inputType="textPersonName"
-                android:text="@string/name_chart5"
-                android:textSize="@dimen/txt_size_14"
-                tools:ignore="LabelFor" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/LL_Chart6"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="invisible">
-
-            <TextView
-                android:id="@+id/Chart6_Old_Name"
-                style="@style/TV_for_Old_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/name_chart6" />
-
-            <EditText
-                android:id="@+id/Chart6_New_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:ems="10"
-                android:inputType="textPersonName"
-                android:text="@string/name_chart6"
-                android:textSize="@dimen/txt_size_14"
-                tools:ignore="LabelFor" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/LL_Chart7"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="invisible">
-
-            <TextView
-                android:id="@+id/Chart7_Old_Name"
-                style="@style/TV_for_Old_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/name_chart7" />
-
-            <EditText
-                android:id="@+id/Chart7_New_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:ems="10"
-                android:inputType="textPersonName"
-                android:text="@string/name_chart7"
-                android:textSize="@dimen/txt_size_14"
-                tools:ignore="LabelFor" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/LL_Chart8"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="invisible">
-
-            <TextView
-                android:id="@+id/Chart8_Old_Name"
-                style="@style/TV_for_Old_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/name_chart8" />
-
-            <EditText
-                android:id="@+id/Chart8_New_Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:ems="10"
-                android:inputType="textPersonName"
-                android:text="@string/name_chart8"
-                android:textSize="@dimen/txt_size_14"
-                tools:ignore="LabelFor" />
-        </LinearLayout>
-
-    </LinearLayout>
+        android:layout_weight="1"/>
 
 </LinearLayout>

@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="@string/result_filename"
+        android:text="@string/enterFileName"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <EditText
