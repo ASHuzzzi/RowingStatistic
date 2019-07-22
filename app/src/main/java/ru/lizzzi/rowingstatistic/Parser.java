@@ -32,7 +32,8 @@ public class Parser {
         this.fileNumber = fileNumber;
     }
 
-    public void parseFile() {
+    public String parseFile() {
+        String rowerName = "Гребец " + fileNumber;
         try {
             BufferedReader reader = new BufferedReader(new FileReader(fileLocation));
             if (reader.ready()) {
@@ -53,6 +54,15 @@ public class Parser {
                     HashMap<String, String> row = new HashMap<>();
                     Scanner lineScanner = new Scanner(rowForScanner);
                     lineScanner.useDelimiter(",");
+                    if (lineInFile == 2) {
+                        while (lineScanner.hasNext()) {
+                            String scannerElement = lineScanner.next();
+                            if (scannerIndex == 5) {
+                                rowerName = scannerElement;
+                            }
+                            scannerIndex++;
+                        }
+                    }
                     if (lineInFile == 3) {
                         while (lineScanner.hasNext()) {
                             String scannerElement = lineScanner.next();
@@ -119,7 +129,7 @@ public class Parser {
                         }
                     }
                     if (lineInFile == 3 || (lineInFile > 29 & !isIncorrectRow)) {
-                        row.put("fileNumber", fileNumber);
+                        row.put("rowerName", rowerName);
                         row.put("distance", distance);
                         row.put("time", time);
                         row.put("speed", speed);
@@ -142,5 +152,6 @@ public class Parser {
         } catch (ParseException e) {
             e.printStackTrace();
         }
+        return rowerName;
     }
 }

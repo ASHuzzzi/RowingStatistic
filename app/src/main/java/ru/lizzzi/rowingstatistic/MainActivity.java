@@ -27,7 +27,7 @@ import java.util.List;
 
 import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Boolean> {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<String> {
 
     //файл с полями для запоминания последней открытой папки
     public static final String APP_PREFERENCES = "lastdir";
@@ -36,28 +36,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     //файл для сохранения настоек для построения графиков
     public static final String APP_PREFERENCES_Chart = "chart_settings";
     public static final String APP_PREFERENCES_TYPE_CHART = "type_chart";
-    public static final String APP_PREFERENCES_BACK = "back";
-    public static final String APP_PREFERENCES_CHART_NAME1= "chart1";
-    public static final String APP_PREFERENCES_CHART_NAME2= "chart2";
-    public static final String APP_PREFERENCES_CHART_NAME3= "chart3";
-    public static final String APP_PREFERENCES_CHART_NAME4= "chart4";
-    public static final String APP_PREFERENCES_CHART_NAME5= "chart5";
-    public static final String APP_PREFERENCES_CHART_NAME6= "chart6";
-    public static final String APP_PREFERENCES_CHART_NAME7= "chart7";
-    public static final String APP_PREFERENCES_CHART_NAME8= "chart8";
-    public static final String APP_PREFERENCES_CHART_STROKE_RATE= "strokerate";
-    public static final String APP_PREFERENCES_CHART_SPEED= "speed";
-    public static final String APP_PREFERENCES_CHART_POWER = "power";
-    public static final String APP_PREFERENCES_CHART_TIME_MAX = "timemax";
-    public static final String APP_PREFERENCES_CHART_TIME_MIN = "timemin";
-    public static final String APP_PREFERENCES_CHART_DISTATNCE_MAX = "distatncemax";
-    public static final String APP_PREFERENCES_CHART_DISTATNCE_MIN = "distatncemin";
     private SharedPreferences sharedPreferencesCharts;
 
-    private int numberOfLoadedFiles = 0; //переменная для подсчета кол-ва открытых файлов
-
     public static final int NUMBER_OF_REQUEST = 23401;
-    private RowerDBHelper mDBHelper;
 
     private Button buttonDistance;
     private Button buttonTime;
@@ -65,7 +46,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private List<String> queueOnLoad = new ArrayList<>();
     private RecyclerView recyclerView;
     private Adapter adapter;
-    private List<String> rowersList = new ArrayList<>();
+    private List<String> rowers = new ArrayList<>();
+    private int MAX_OPEN_FILE = 8;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         buttonFileExplorer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                if (numberOfLoadedFiles < 8) { //проверка на макисмальное количество файлов
+                if (rowers.size() < MAX_OPEN_FILE) { //проверка на макисмальное количество файлов
                     final OpenFileDialog fileDialog = new OpenFileDialog(v.getContext())
                             .setFilter(".*\\.csv")
                             .setOpenDialogListener(new OpenFileDialog.OpenDialogListener() {
@@ -107,8 +89,17 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                                     if (!fileName.equals(loadedFile)) {
                                         loadedFile = fileName;
                                         queueOnLoad.add(fileName);
-                                        rowersList.add("Load");
-                                        startFileLoaders();
+                                        rowers.add("Load");
+                                        if (queueOnLoad.size() == 1) {
+                                            adapter = new Adapter(getApplicationContext(), rowers);
+                                            LinearLayoutManager layoutManager =
+                                                    new LinearLayoutManager(getApplicationContext());
+                                            recyclerView.setLayoutManager(layoutManager);
+                                            recyclerView.setAdapter(adapter);
+                                            startFileLoaders();
+                                        } else {
+                                            adapter.notifyDataSetChanged();
+                                        }
                                     } else {
                                         toastShow("Вы выбрали уже загруженный файл");
                                     }
@@ -125,33 +116,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         buttonShowChart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (numberOfLoadedFiles > 0) {
-                    SharedPreferences.Editor editor = sharedPreferencesCharts.edit();
-                    editor.putInt(APP_PREFERENCES_BACK, numberOfLoadedFiles)
-                            .putString(APP_PREFERENCES_CHART_NAME1, rowersList.get(0));
-                    if (numberOfLoadedFiles > 1) {
-                        editor.putString(APP_PREFERENCES_CHART_NAME2, rowersList.get(1));
-                    }
-                    if (numberOfLoadedFiles > 2) {
-                        editor.putString(APP_PREFERENCES_CHART_NAME3, rowersList.get(2));
-                    }
-                    if (numberOfLoadedFiles > 3) {
-                        editor.putString(APP_PREFERENCES_CHART_NAME4, rowersList.get(3));
-                    }
-                    if (numberOfLoadedFiles > 4){
-                        editor.putString(APP_PREFERENCES_CHART_NAME5, rowersList.get(4));
-                    }
-                    if (numberOfLoadedFiles > 5) {
-                        editor.putString(APP_PREFERENCES_CHART_NAME6, rowersList.get(5));
-                    }
-                    if (numberOfLoadedFiles > 6) {
-                        editor.putString(APP_PREFERENCES_CHART_NAME7, rowersList.get(6));
-                    }
-                    if (numberOfLoadedFiles > 7) {
-                        editor.putString(APP_PREFERENCES_CHART_NAME8, rowersList.get(7));
-                    }
-                    editor.apply();
-                    getBoundaryValues(); //получаем границы для графиков
+                if (rowers.size() > 0) {
                     Intent intent = new Intent(MainActivity.this, ChartActivity.class);
                     startActivity(intent);
                 } else {
@@ -180,8 +145,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onStart(){
         super.onStart();
         //отчищаем БД от записей на случай некорректного закрытия приложения в прошлый раз
-        mDBHelper = new RowerDBHelper(this);
-        mDBHelper.clearDB();
+        RowerDBHelper rowerDBHelper = new RowerDBHelper(this);
+        rowerDBHelper.clearDB();
         //показываем по какому значения будут построены графики
         sharedPreferencesCharts =
                 this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
@@ -232,39 +197,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         sharedPreferences.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
     }
 
-    private void getBoundaryValues() { //получаем границы для графиков, max/min скорости и дистанции
-        Log.d(
-                "LoadFile",
-                "Граничные условия: Начало");
-        sharedPreferencesCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferencesCharts.edit();
-        editor.putFloat(
-                APP_PREFERENCES_CHART_SPEED,
-                mDBHelper.getMaxSpeed());
-        editor.putFloat(
-                APP_PREFERENCES_CHART_STROKE_RATE,
-                mDBHelper.getMaxStrokeRate());
-        editor.putInt(
-                APP_PREFERENCES_CHART_POWER,
-                mDBHelper.getMaxPower());
-        editor.putFloat(
-                APP_PREFERENCES_CHART_TIME_MAX,
-                mDBHelper.getMaxTime());
-        editor.putFloat(
-                APP_PREFERENCES_CHART_TIME_MIN,
-                mDBHelper.getMinTime());
-        editor.putFloat(
-                APP_PREFERENCES_CHART_DISTATNCE_MAX,
-                mDBHelper.getMaxDistance());
-        editor.putFloat(
-                APP_PREFERENCES_CHART_DISTATNCE_MIN,
-                mDBHelper.getMinDistance());
-        editor.apply();
-        Log.d(
-                "LoadFile",
-                "Граничные условия: Конец");
-    }
-
     private void ButtonSelect(Button button){ //метод выбора кнопки
         button.setTextColor(getResources().getColor(R.color.colorPrimary));
         button.setTypeface(null, Typeface.BOLD);
@@ -276,7 +208,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent datas){ //использем этот метод чтобы закрыть активность после возврата с предыдущей
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent){ //использем этот метод чтобы закрыть активность после возврата с предыдущей
         if (requestCode == 1234){
             finish();
         }
@@ -284,23 +216,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private void startFileLoaders() {
         if (queueOnLoad.size() > 0) {
-            if (rowersList.size() == 1) {
-                adapter = new Adapter(this, rowersList);
-                LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-                recyclerView.setLayoutManager(layoutManager);
-                recyclerView.setAdapter(adapter);
-
-            } else {
-                adapter.notifyDataSetChanged();
-            }
             Log.d(
                     "LoadFile",
-                    "Старт загрузчика для " + numberOfLoadedFiles + " спортсмена");
+                    "Старт загрузчика для " + rowers.size() + " спортсмена");
             Bundle bundle = new Bundle();
+            int loaderID = rowers.size()-1;
             bundle.putString("fileLocation", queueOnLoad.get(0));
-            bundle.putString("fileNumber", String.valueOf(numberOfLoadedFiles));
+            bundle.putString("fileNumber", String.valueOf(queueOnLoad.size()));
             Loader fileLoader = getSupportLoaderManager().initLoader(
-                    numberOfLoadedFiles,
+                    loaderID,
                     bundle,
                     this);
             fileLoader.forceLoad();
@@ -309,23 +233,22 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @NonNull
     @Override
-    public Loader<Boolean> onCreateLoader(int loaderId, Bundle bundle) {
+    public Loader<String> onCreateLoader(int loaderId, Bundle bundle) {
         return new FileLoader(this, bundle);
     }
 
     @Override
-    public void onLoadFinished(@NonNull Loader<Boolean> loader, Boolean aBoolean) {
-        numberOfLoadedFiles++;
-        rowersList.set(loader.getId(), "Гребец " + numberOfLoadedFiles);
+    public void onLoadFinished(@NonNull Loader<String> loader, String chartName) {
+        rowers.set(loader.getId(), chartName);
         adapter.notifyDataSetChanged();
         Log.d("LoadFile", "Стоп загрузчика для " + loader.getId() + " спортсмена");
         queueOnLoad.remove(0);
         startFileLoaders();
-        toastShow("Файл загружен " + loader.getId() );
+        toastShow("Файл загружен " + loader.getId());
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<Boolean> loader) {
+    public void onLoaderReset(@NonNull Loader<String> loader) {
 
     }
 

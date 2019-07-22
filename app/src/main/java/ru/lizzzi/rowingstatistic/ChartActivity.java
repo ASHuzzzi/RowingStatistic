@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import ru.lizzzi.rowingstatistic.charts.charts.LineChart;
@@ -51,67 +52,48 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     public static final String APP_PREFERENCES = "lastdir";
     public static final String APP_PREFERENCES_COUNTER = "counter";
     public static final String APP_PREFERENCES_DIR = "dir";
-    private SharedPreferences mSettings;
+    private SharedPreferences sharedPreferencesForSettings;
 
     //файл для сохранения настоек для построения графиков
     public static final String APP_PREFERENCES_Chart = "chart_settings";
     public static final String APP_PREFERENCES_TYPE_CHART = "type_chart";
-    public static final String APP_PREFERENCES_BACK = "back";
-    public static final String APP_PREFERENCES_CHART_NAME1 = "chart1";
-    public static final String APP_PREFERENCES_CHART_NAME2 = "chart2";
-    public static final String APP_PREFERENCES_CHART_NAME3 = "chart3";
-    public static final String APP_PREFERENCES_CHART_NAME4 = "chart4";
-    public static final String APP_PREFERENCES_CHART_NAME5 = "chart5";
-    public static final String APP_PREFERENCES_CHART_NAME6 = "chart6";
-    public static final String APP_PREFERENCES_CHART_NAME7 = "chart7";
-    public static final String APP_PREFERENCES_CHART_NAME8 = "chart8";
-    public static final String APP_PREFERENCES_CHART_SPEED = "speed";
-    public static final String APP_PREFERENCES_CHART_STROKE_RATE = "strokerate";
-    public static final String APP_PREFERENCES_CHART_POWER = "power";
-    public static final String APP_PREFERENCES_CHART_TIME_MAX = "timemax";
-    public static final String APP_PREFERENCES_CHART_TIME_MIN = "timemin";
-    public static final String APP_PREFERENCES_CHART_DISTATNCE_MAX = "distatncemax";
-    public static final String APP_PREFERENCES_CHART_DISTATNCE_MIN = "distatncemin";
-    private SharedPreferences mCharts;
+    private SharedPreferences sharedPreferencesForCharts;
 
     //графики и массивы для них
-    private LineChart mChartUp;
-    private LineChart mChartDown;
-    ArrayList<ILineDataSet> dataSetsUp = new ArrayList<ILineDataSet>();
-    ArrayList<ILineDataSet> dataSetsDown = new ArrayList<ILineDataSet>();
+    private LineChart chartUp;
+    private LineChart chartDown;
+    private ArrayList<ILineDataSet> dataSetsUp = new ArrayList<>();
+    private ArrayList<ILineDataSet> dataSetsDown = new ArrayList<>();
 
-    private int countOpenFiles = 0;//переменная для подсчета кол-ва открытых файлов
+    private int timeOrDistance = 1; //тображение по х времени иди дистаниции. 0 и 1 соотвественно
+    private int beginSampleUp = 0; //ссылка в массиве на начало отрезка выборки
+    private int endSampleUp = 0; // ссылка в массиве на конец отрезка выборки
+    private int beginSampleDown = 0; //ссылка в массиве на начало отрезка выборки
+    private int endSampleDown = 0; // ссылка в массиве на конец отрезка выборки
+    private float maxSpeed = 0; //максимальное значение по у для графика скорость/динамика
+    private int maxPower = 0; //максимальное значение по у для графика для гребцов
+    private float maxStrokeRate = 0;
+    private float maxTime = 0;
+    private float minTime = 0;
+    private float maxDistance = 0;
+    private float minDistance = 0;
+    private double tapPoint = 0;
+    private int counterPeriod = 0;
 
-    final Context context = this;
+    private String dataForSaveInFile = "";
 
-    private int timeF_distanceT = 1; //тображение по х времени иди дистаниции. 0 и 1 соотвественно
-    int beginsample_up = 0; //ссылка в массиве на начало отрезка выборки
-    int endsample_up = 0; // ссылка в массиве на конец отрезка выборки
-    int beginsample_down = 0; //ссылка в массиве на начало отрезка выборки
-    int endsample_down = 0; // ссылка в массиве на конец отрезка выборки
-    float max_absolut = 0; //максимальное значение по у для графика скорость/динамика
-    int max_power = 0; //максимальное значение по у для графика для гребцов
-    float max_stroke_rate = 0;
-    float max_time = 0;
-    float min_time = 0;
-    float max_distance = 0;
-    float min_distance = 0;
-    double tap_point = 0;
-    int counter_peroid = 0;
-
-    String dataForSaveInFile = "";
-
-    float ram_begin = -1;
-    float ram_end = 0;
-
-    String[] chart_name_name = new String[8];
-
-    double correct_distance = new Double(7.1);
-    double correct_time = new Double(10.1);
+    private float ramBegin = -1;
+    private float ramEnd = 0;
 
     private Button buttonTime;
     private Button buttonDistance;
     private RowerDBHelper rowerDBHelper;
+    private List<String> chartName = new ArrayList<>();
+
+    private int[] colorsForSample = new int[]{
+            ColorTemplate.COLORFUL_COLORS[0],
+            ColorTemplate.COLORFUL_COLORS[1]
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,20 +103,20 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         setContentView(R.layout.chart_main);
 
         //показываем, выделением кнопок, по каким величинам построена ось абсцисс
-        buttonTime = findViewById(R.id.button17);
+        buttonTime = findViewById(R.id.buttonTime);
         buttonTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mCharts.edit().putInt(APP_PREFERENCES_TYPE_CHART, 0).apply();
+                sharedPreferencesForCharts.edit().putInt(APP_PREFERENCES_TYPE_CHART, 0).apply();
                 ButtonSelect(buttonTime);
                 ButtonNoNSelect(buttonDistance);
             }
         });
-        buttonDistance = findViewById(R.id.button16);
+        buttonDistance = findViewById(R.id.buttonDistance);
         buttonDistance.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mCharts.edit().putInt(APP_PREFERENCES_TYPE_CHART, 1).apply();
+                sharedPreferencesForCharts.edit().putInt(APP_PREFERENCES_TYPE_CHART, 1).apply();
                 ButtonSelect(buttonDistance);
                 ButtonNoNSelect(buttonTime);
             }
@@ -147,44 +129,20 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     public void onStart() {
         super.onStart();
         //получаем значения из файла chart_settings
-        mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-        countOpenFiles = mCharts.getInt(APP_PREFERENCES_BACK, 0);
-        timeF_distanceT = (mCharts.getInt(APP_PREFERENCES_TYPE_CHART, 0));
-        max_power = mCharts.getInt(APP_PREFERENCES_CHART_POWER, 0);
-        max_absolut = mCharts.getFloat(APP_PREFERENCES_CHART_SPEED, 0);
-        max_time = mCharts.getFloat(APP_PREFERENCES_CHART_TIME_MAX, 0);
-        min_time = mCharts.getFloat(APP_PREFERENCES_CHART_TIME_MIN, 0);
-        max_distance = mCharts.getFloat(APP_PREFERENCES_CHART_DISTATNCE_MAX, 0);
-        min_distance = 0;
-        max_stroke_rate = mCharts.getFloat(APP_PREFERENCES_CHART_STROKE_RATE, 0);
+        sharedPreferencesForCharts =
+                this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
+        timeOrDistance = (sharedPreferencesForCharts.getInt(APP_PREFERENCES_TYPE_CHART, 0));
+        maxPower = rowerDBHelper.getMaxPower();
+        maxSpeed = rowerDBHelper.getMaxSpeed();
+        maxTime = rowerDBHelper.getMaxTime();
+        minTime = rowerDBHelper.getMinTime();
+        maxDistance = rowerDBHelper.getMaxDistance();
+        minDistance = 0;
+        maxStrokeRate = rowerDBHelper.getMaxStrokeRate();
 
-        //получаем названия графиков
-        if (countOpenFiles > 0) {
-            chart_name_name[0] = mCharts.getString(APP_PREFERENCES_CHART_NAME1, "");
-        }
-        if (countOpenFiles > 1) {
-            chart_name_name[1] = mCharts.getString(APP_PREFERENCES_CHART_NAME2, "");
-        }
-        if (countOpenFiles > 2) {
-            chart_name_name[2] = mCharts.getString(APP_PREFERENCES_CHART_NAME3, "");
-        }
-        if (countOpenFiles > 3) {
-            chart_name_name[3] = mCharts.getString(APP_PREFERENCES_CHART_NAME4, "");
-        }
-        if (countOpenFiles > 4) {
-            chart_name_name[4] = mCharts.getString(APP_PREFERENCES_CHART_NAME5, "");
-        }
-        if (countOpenFiles > 5) {
-            chart_name_name[5] = mCharts.getString(APP_PREFERENCES_CHART_NAME6, "");
-        }
-        if (countOpenFiles > 6) {
-            chart_name_name[6] = mCharts.getString(APP_PREFERENCES_CHART_NAME7, "");
-        }
-        if (countOpenFiles > 7) {
-            chart_name_name[7] = mCharts.getString(APP_PREFERENCES_CHART_NAME8, "");
-        }
-        ChartShowALL();  //строим графики
-        int typeChart = mCharts.getInt(APP_PREFERENCES_TYPE_CHART, 1);
+        chartName = rowerDBHelper.getRowerName();
+        showCharts();  //строим графики
+        int typeChart = sharedPreferencesForCharts.getInt(APP_PREFERENCES_TYPE_CHART, 1);
         int TIME = 0;
         if (typeChart == TIME) {
             ButtonSelect(buttonTime);
@@ -199,14 +157,15 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     public void onDestroy() {
         super.onDestroy();
         //дублируем удаление запомненной папки в File Dialog
-        mSettings = this.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
-        mSettings.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
+        sharedPreferencesForSettings =
+                this.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+        sharedPreferencesForSettings.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
         //отчищаем базу
         rowerDBHelper.clearDB();
     }
 
 
-    public void BeginSampleClick(View view) { //метод выбора начало выборки
+    public void beginSampleClick(View view) { //метод выбора начало выборки
         /*
         алгоритм:
         проверяем что у нас по оси абсцисс - время или дистанция
@@ -216,31 +175,39 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         для времени и дистанции все кроме проверки граничных условий совпадает по алгоритму
          */
 
-        if (tap_point >= 0){
-            if (timeF_distanceT == 0) {
-                if (tap_point < min_time || tap_point > max_time) {
-                    Toast.makeText(getApplicationContext(), "Значение вне доступного периода", Toast.LENGTH_LONG).show();
+        if (tapPoint >= 0) {
+            if (timeOrDistance == 0) {
+                if (tapPoint < minTime || tapPoint > maxTime) {
+                    Toast.makeText(
+                            getApplicationContext(),
+                            "Значение вне доступного периода",
+                            Toast.LENGTH_LONG
+                    ).show();
                 } else {
-                    if (ram_end > 0 && ram_end < tap_point) {
-                        Toast.makeText(getApplicationContext(), "Начало периода не может быть позже конца", Toast.LENGTH_LONG).show();
+                    if (ramEnd > 0 && ramEnd < tapPoint) {
+                        Toast.makeText(
+                                getApplicationContext(),
+                                "Начало периода не может быть позже конца",
+                                Toast.LENGTH_LONG
+                        ).show();
                     } else {
                         // граница строится как график
                         // заполняем массив для еще одного графика
-                        ram_begin = (float) tap_point;
+                        ramBegin = (float) tapPoint;
                         ArrayList<Entry> values_up = new ArrayList<Entry>();
                         ArrayList<Entry> values_down = new ArrayList<Entry>();
-                        values_up.add(new Entry(ram_begin, 0));
-                        values_up.add(new Entry(ram_begin, 1));
+                        values_up.add(new Entry(ramBegin, 0));
+                        values_up.add(new Entry(ramBegin, 1));
 
-                        values_down.add(new Entry(ram_begin, 0));
-                        values_down.add(new Entry(ram_begin, 1));
+                        values_down.add(new Entry(ramBegin, 0));
+                        values_down.add(new Entry(ramBegin, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
                         LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");
 
                         d_up.setLineWidth(3.5f);
                         d_up.setCircleRadius(1f);
 
-                        int color = mColors2[0];
+                        int color = colorsForSample[0];
                         d_up.setColor(color);
                         d_up.setCircleColor(color);
 
@@ -249,46 +216,53 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
                         d_down.setColor(color);
                         d_down.setCircleColor(color);
-                        if (beginsample_up == 0) {
+                        if (beginSampleUp == 0) {
                             dataSetsUp.add(d_up);
-                            beginsample_up = dataSetsUp.size();
+                            beginSampleUp = dataSetsUp.size();
                             dataSetsDown.add(d_down);
-                            beginsample_down = dataSetsDown.size();
+                            beginSampleDown = dataSetsDown.size();
                         } else {
-                            dataSetsUp.set(beginsample_up - 1, d_up);
-                            dataSetsDown.set(beginsample_down - 1, d_down);
+                            dataSetsUp.set(beginSampleUp - 1, d_up);
+                            dataSetsDown.set(beginSampleDown - 1, d_down);
                         }
-                        ChartShowUp(dataSetsUp); //строим границе на верхнем графике
-                        ChartShowDown(dataSetsDown); //строим границу на нижнем графике
-                        if (ram_end != 0){
-                            sample_show(); //метод будет выполнен если есть начало и конец периода.
+                        chartShowUp(dataSetsUp); //строим границе на верхнем графике
+                        chartShowDown(dataSetsDown); //строим границу на нижнем графике
+                        if (ramEnd != 0){
+                            sampleShow(); //метод будет выполнен если есть начало и конец периода.
                         }
                     }
                 }
-
             } else {
-                if (tap_point < min_distance || tap_point > max_distance) {
-                    Toast.makeText(getApplicationContext(), "Значение вне доступного периода", Toast.LENGTH_LONG).show();
+                if (tapPoint < minDistance || tapPoint > maxDistance) {
+                    Toast.makeText(
+                            getApplicationContext(),
+                            "Значение вне доступного периода",
+                            Toast.LENGTH_LONG
+                    ).show();
                 } else {
-                    if (ram_end > 0 && ram_end < tap_point) {
-                        Toast.makeText(getApplicationContext(), "Начало периода не может быть позже конца", Toast.LENGTH_LONG).show();
+                    if (ramEnd > 0 && ramEnd < tapPoint) {
+                        Toast.makeText(
+                                getApplicationContext(),
+                                "Начало периода не может быть позже конца",
+                                Toast.LENGTH_LONG
+                        ).show();
                     } else {
                         //здесь все аналогично выше
-                        ram_begin = (float) tap_point;
+                        ramBegin = (float) tapPoint;
                         ArrayList<Entry> values_up = new ArrayList<Entry>();
                         ArrayList<Entry> values_down = new ArrayList<Entry>();
-                        values_up.add(new Entry(ram_begin, 0));
-                        values_up.add(new Entry(ram_begin, 1));
+                        values_up.add(new Entry(ramBegin, 0));
+                        values_up.add(new Entry(ramBegin, 1));
 
-                        values_down.add(new Entry(ram_begin, 0));
-                        values_down.add(new Entry(ram_begin, 1));
+                        values_down.add(new Entry(ramBegin, 0));
+                        values_down.add(new Entry(ramBegin, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Начало выборки");
                         LineDataSet d_down = new LineDataSet(values_down, "Начало выборки");
 
                         d_up.setLineWidth(3.5f);
                         d_up.setCircleRadius(1f);
 
-                        int color = mColors2[0];
+                        int color = colorsForSample[0];
                         d_up.setColor(color);
                         d_up.setCircleColor(color);
 
@@ -297,30 +271,27 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
                         d_down.setColor(color);
                         d_down.setCircleColor(color);
-                        if (beginsample_up == 0) {
+                        if (beginSampleUp == 0) {
                             dataSetsUp.add(d_up);
-                            beginsample_up = dataSetsUp.size();
+                            beginSampleUp = dataSetsUp.size();
                             dataSetsDown.add(d_down);
-                            beginsample_down = dataSetsDown.size();
+                            beginSampleDown = dataSetsDown.size();
                         } else {
-                            dataSetsUp.set(beginsample_up - 1, d_up);
-                            dataSetsDown.set(beginsample_down - 1, d_down);
+                            dataSetsUp.set(beginSampleUp - 1, d_up);
+                            dataSetsDown.set(beginSampleDown - 1, d_down);
                         }
-                        ChartShowUp(dataSetsUp);
-                        ChartShowDown(dataSetsDown);
-                        if (ram_end != 0){
-                            sample_show();
+                        chartShowUp(dataSetsUp);
+                        chartShowDown(dataSetsDown);
+                        if (ramEnd != 0){
+                            sampleShow();
                         }
                     }
                 }
             }
         }
-
-        //tap_point = 0;
-
     }
 
-    public void EndSampleClick(View view) { //метод выбора конца выборки
+    public void endSampleClick(View view) { //метод выбора конца выборки
         /*
         алгоритм:
         проверяем что у нас по оси абсцисс - время или дистанция
@@ -332,30 +303,37 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         общие моменты описаны в строках 206-249
          */
 
-
-        if (tap_point > 0){
-            if (timeF_distanceT == 0) {
-                if (tap_point < min_time || tap_point > (max_time + 10)) {
-                    Toast.makeText(getApplicationContext(), "Значение вне доступного периода", Toast.LENGTH_LONG).show();
+        if (tapPoint > 0) {
+            if (timeOrDistance == 0) {
+                if (tapPoint < minTime || tapPoint > (maxTime + 10)) {
+                    Toast.makeText(
+                            getApplicationContext(),
+                            "Значение вне доступного периода",
+                            Toast.LENGTH_LONG
+                    ).show();
                 } else {
-                    if (ram_begin > 0 && tap_point < ram_begin) {
-                        Toast.makeText(getApplicationContext(), "Конец периода не может быть меньше начала", Toast.LENGTH_LONG).show();
+                    if (ramBegin > 0 && tapPoint < ramBegin) {
+                        Toast.makeText(
+                                getApplicationContext(),
+                                "Начало периода не может быть позже конца",
+                                Toast.LENGTH_LONG
+                        ).show();
                     } else {
-                        ram_end = (float) tap_point;
+                        ramEnd = (float) tapPoint;
                         ArrayList<Entry> values_up = new ArrayList<Entry>();
                         ArrayList<Entry> values_down = new ArrayList<Entry>();
-                        values_up.add(new Entry(ram_end, 0));
-                        values_up.add(new Entry(ram_end, 1));
+                        values_up.add(new Entry(ramEnd, 0));
+                        values_up.add(new Entry(ramEnd, 1));
 
-                        values_down.add(new Entry(ram_end, 0));
-                        values_down.add(new Entry(ram_end, 1));
+                        values_down.add(new Entry(ramEnd, 0));
+                        values_down.add(new Entry(ramEnd, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Конец выборки");
                         LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");
 
                         d_up.setLineWidth(3.5f);
                         d_up.setCircleRadius(1f);
 
-                        int color = mColors2[1];
+                        int color = colorsForSample[1];
                         d_up.setColor(color);
                         d_up.setCircleColor(color);
 
@@ -364,44 +342,52 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
                         d_down.setColor(color);
                         d_down.setCircleColor(color);
-                        if (endsample_up == 0) {
+                        if (endSampleUp == 0) {
                             dataSetsUp.add(d_up);
-                            endsample_up = dataSetsUp.size();
+                            endSampleUp = dataSetsUp.size();
                             dataSetsDown.add(d_down);
-                            endsample_down = dataSetsDown.size();
+                            endSampleDown = dataSetsDown.size();
                         } else {
-                            dataSetsUp.set(endsample_up - 1, d_up);
-                            dataSetsDown.set(endsample_down - 1, d_down);
+                            dataSetsUp.set(endSampleUp - 1, d_up);
+                            dataSetsDown.set(endSampleDown - 1, d_down);
                         }
-                        ChartShowUp(dataSetsUp);
-                        ChartShowDown(dataSetsDown);
-                        if (ram_begin != -1){
-                            sample_show();
+                        chartShowUp(dataSetsUp);
+                        chartShowDown(dataSetsDown);
+                        if (ramBegin != -1){
+                            sampleShow();
                         }
                     }
                 }
             } else {
-                if (tap_point < min_distance || tap_point > max_distance) {
-                    Toast.makeText(getApplicationContext(), "Значение вне доступного периода", Toast.LENGTH_LONG).show();
+                if (tapPoint < minDistance || tapPoint > maxDistance) {
+                    Toast.makeText(
+                            getApplicationContext(),
+                            "Значение вне доступного периода",
+                            Toast.LENGTH_LONG
+                    ).show();
                 } else {
-                    if (ram_begin > 0 && tap_point < ram_begin) {
-                        Toast.makeText(getApplicationContext(), "Конец периода не может быть меньше начала", Toast.LENGTH_LONG).show();
+                    if (ramBegin > 0 && tapPoint < ramBegin) {
+                        Toast.makeText(
+                                getApplicationContext(),
+                                "Начало периода не может быть позже конца",
+                                Toast.LENGTH_LONG
+                        ).show();
                     } else {
-                        ram_end = (float) tap_point;
+                        ramEnd = (float) tapPoint;
                         ArrayList<Entry> values_up = new ArrayList<Entry>();
                         ArrayList<Entry> values_down = new ArrayList<Entry>();
-                        values_up.add(new Entry(ram_end, 0));
-                        values_up.add(new Entry(ram_end, 1));
+                        values_up.add(new Entry(ramEnd, 0));
+                        values_up.add(new Entry(ramEnd, 1));
 
-                        values_down.add(new Entry(ram_end, 0));
-                        values_down.add(new Entry(ram_end, 1));
+                        values_down.add(new Entry(ramEnd, 0));
+                        values_down.add(new Entry(ramEnd, 1));
                         LineDataSet d_up = new LineDataSet(values_up, "Конец выборки");
                         LineDataSet d_down = new LineDataSet(values_down, "Конец выборки");
 
                         d_up.setLineWidth(3.5f);
                         d_up.setCircleRadius(1f);
 
-                        int color = mColors2[1];
+                        int color = colorsForSample[1];
                         d_up.setColor(color);
                         d_up.setCircleColor(color);
 
@@ -410,19 +396,19 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
                         d_down.setColor(color);
                         d_down.setCircleColor(color);
-                        if (endsample_up == 0) {
+                        if (endSampleUp == 0) {
                             dataSetsUp.add(d_up);
-                            endsample_up = dataSetsUp.size();
+                            endSampleUp = dataSetsUp.size();
                             dataSetsDown.add(d_down);
-                            endsample_down = dataSetsDown.size();
+                            endSampleDown = dataSetsDown.size();
                         } else {
-                            dataSetsUp.set(endsample_up - 1, d_up);
-                            dataSetsDown.set(endsample_down - 1, d_down);
+                            dataSetsUp.set(endSampleUp - 1, d_up);
+                            dataSetsDown.set(endSampleDown - 1, d_down);
                         }
-                        ChartShowUp(dataSetsUp);
-                        ChartShowDown(dataSetsDown);
-                        if (ram_begin != -1){
-                            sample_show();
+                        chartShowUp(dataSetsUp);
+                        chartShowDown(dataSetsDown);
+                        if (ramBegin != -1){
+                            sampleShow();
                         }
                     }
                 }
@@ -430,18 +416,17 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         }
     }
 
+    public void editPeriod(View view) { //метод обработки выборки
 
-    public void EditPeriodClick(View view) { //метод обработки выборки
-
-        if (ram_begin > -1 && ram_end > 0) { //проверка на наличие начала и конца выборки
+        if (ramBegin > -1 && ramEnd > 0) { //проверка на наличие начала и конца выборки
             final RowerDBHelper mDBHelper = new RowerDBHelper(this);
 
             //сначала создаем поле для ввода комментария
-            LayoutInflater li = LayoutInflater.from(context);
+            LayoutInflater li = LayoutInflater.from(this);
             final View promptsView = li.inflate(R.layout.comment_for_result, null);
 
             //Создаем AlertDialog
-            AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(context);
+            AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(this);
 
             //Настраиваем prompt.xml для нашего AlertDialog:
             mDialogBuilder.setView(promptsView);
@@ -455,32 +440,41 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                     .setPositiveButton("Обработать",
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    dataForSaveInFile = dataForSaveInFile + (counter_peroid + 1) + ";";
+                                    dataForSaveInFile = dataForSaveInFile + (counterPeriod + 1) + ";";
                                     //цикл для взятия среднего значения
-                                    for (int rower = 0; rower < countOpenFiles; rower++) { //для каждого пловца
-                                        float average = (timeF_distanceT == 0)
+                                    for (int rower = 0; rower < chartName.size(); rower++) { //для каждого пловца
+                                        float average = (timeOrDistance == 0)
                                                 ? rowerDBHelper.getAverageTime(
                                                         rower,
-                                                        ram_begin,
-                                                        ram_end)
+                                                        ramBegin,
+                                                        ramEnd)
                                                 : rowerDBHelper.getAverageDistance(
                                                         rower,
-                                                        ram_begin,
-                                                        ram_end);
+                                                        ramBegin,
+                                                        ramEnd);
                                         dataForSaveInFile = dataForSaveInFile + average + ";";
                                     }
-                                    dataForSaveInFile = dataForSaveInFile + userInput.getText() + "\n"; //добавляем коммент к строке
-                                    ram_begin = -1;
-                                    ram_end = 0;
-                                    counter_peroid++;
-                                    Toast.makeText(getApplicationContext(), "Выборка добавлена", Toast.LENGTH_SHORT).show();
+                                    dataForSaveInFile =
+                                            dataForSaveInFile + userInput.getText() + "\n"; //добавляем коммент к строке
+                                    ramBegin = -1;
+                                    ramEnd = 0;
+                                    counterPeriod++;
+                                    Toast.makeText(
+                                            getApplicationContext(),
+                                            "Выборка добавлена",
+                                            Toast.LENGTH_SHORT
+                                    ).show();
                                 }
                             })
                     .setNegativeButton("Отмена",
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
                                     dialog.cancel();
-                                    Toast.makeText(getApplicationContext(), "Выборка не добавлена!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(
+                                            getApplicationContext(),
+                                            "Выборка не добавлена!",
+                                            Toast.LENGTH_SHORT
+                                    ).show();
                                 }
                             });
 
@@ -495,7 +489,11 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
             Button pbutton = alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
             pbutton.setTextColor(getResources().getColor(R.color.colorGreen));
         } else {
-            Toast.makeText(getApplicationContext(), "Выберите границы периода", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    getApplicationContext(),
+                    "Выберите границы периода",
+                    Toast.LENGTH_LONG
+            ).show();
         }
     }
 
@@ -519,14 +517,12 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         AlertDialog.Builder quitDialog = new AlertDialog.Builder(
                 ChartActivity.this);
         quitDialog.setTitle("Закрыть приложение?");
-
         quitDialog.setPositiveButton("Да", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 finish();
             }
         });
-
         quitDialog.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -536,14 +532,14 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         quitDialog.show();
     }
 
-    public void Whrite_file(View v) { //запись в файл
+    public void writeInFile(View v) { //запись в файл
 
         if (dataForSaveInFile.length() > 1) { //проверяем чтобы строка была не пустая
-            LayoutInflater li = LayoutInflater.from(context);
+            LayoutInflater li = LayoutInflater.from(this);
             final View promptsView = li.inflate(R.layout.result_filename, null);
 
             //Создаем AlertDialog
-            AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(context);
+            AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(this);
 
             //Настраиваем prompt.xml для нашего AlertDialog:
             mDialogBuilder.setView(promptsView);
@@ -559,34 +555,33 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                                 public void onClick(DialogInterface dialog, int id) {
 
                                     String firstRow = "Период;";
-
-                                    if (countOpenFiles > 0) {
-                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME1, "") + ";";
+                                    if (chartName.size() > 0) {
+                                        firstRow = firstRow + chartName.get(0) + ";";
                                     }
-                                    if (countOpenFiles > 1) {
-                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME2, "") + ";";
+                                    if (chartName.size() > 1) {
+                                        firstRow = firstRow + chartName.get(1) + ";";
                                     }
-                                    if (countOpenFiles > 2) {
-                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME3, "") + ";";
+                                    if (chartName.size() > 2) {
+                                        firstRow = firstRow + chartName.get(2) + ";";
                                     }
-                                    if (countOpenFiles > 3) {
-                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME4, "") + ";";
+                                    if (chartName.size() > 3) {
+                                        firstRow = firstRow + chartName.get(3) + ";";
                                     }
-                                    if (countOpenFiles > 4) {
-                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME5, "") + ";";
+                                    if (chartName.size() > 4) {
+                                        firstRow = firstRow + chartName.get(4) + ";";
                                     }
-                                    if (countOpenFiles > 5) {
-                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME6, "") + ";";
+                                    if (chartName.size() > 5) {
+                                        firstRow = firstRow + chartName.get(5) + ";";
                                     }
-                                    if (countOpenFiles > 6) {
-                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME7, "") + ";";
+                                    if (chartName.size() > 6) {
+                                        firstRow = firstRow + chartName.get(6) + ";";
                                     }
-                                    if (countOpenFiles > 7) {
-                                        firstRow = firstRow + mCharts.getString(APP_PREFERENCES_CHART_NAME8, "") + ";";
+                                    if (chartName.size() > 7) {
+                                        firstRow = firstRow + chartName.get(7) + ";";
                                     }
                                     firstRow = firstRow + "Комментарий" + "\n";
 
-                                    mSettings = context.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+                                    sharedPreferencesForSettings = getApplicationContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
                                     String nameSavedFile;
                                     if (userInput.length() > 0) {
                                         nameSavedFile = userInput.getText().toString() + ".csv";
@@ -605,16 +600,16 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                                     //пытаемся сохраниться в папку с исходниками
                                     try{
                                         checkDirectory = Environment.getExternalStorageDirectory().getPath();
-                                        if (checkDirectory.equals(mSettings.getString(APP_PREFERENCES_DIR, ""))){
+                                        if (checkDirectory.equals(sharedPreferencesForSettings.getString(APP_PREFERENCES_DIR, ""))){
                                             throw new Exception();
                                         }
                                         pathForSave = new File(
-                                                mSettings.getString(APP_PREFERENCES_DIR, "") +
+                                                sharedPreferencesForSettings.getString(APP_PREFERENCES_DIR, "") +
                                                 "/" +
                                                 nameSavedFile);
                                         saveFile(pathForSave, firstRow, dataForSaveInFile);
                                         //пытаемся сохраниться в папку с исходниками
-                                        pathForSave = new File(mSettings.getString(APP_PREFERENCES_DIR, "") + "/" + nameSavedFile);
+                                        pathForSave = new File(sharedPreferencesForSettings.getString(APP_PREFERENCES_DIR, "") + "/" + nameSavedFile);
                                         saveFile(pathForSave, firstRow, dataForSaveInFile);
                                         textForToast = "Файл сохранен в папку с иcходными файлами!";
                                     } catch (Exception e) {
@@ -635,7 +630,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                                         } else {
                                             try { //сохраняем во внутренню память
                                                 pathForSave = new File(
-                                                        context.getFilesDir() +
+                                                        getApplicationContext().getFilesDir() +
                                                         "/" +
                                                         nameSavedFile);
                                                 saveFile(pathForSave, firstRow, dataForSaveInFile);
@@ -678,74 +673,74 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
             outputStream.write(mass_temp.getBytes("Cp1251"));
             outputStream.close();
             return true;
-        }else {
+        } else {
             return false;
         }
     }
 
-    public void Сhange_time(View view) { //метод смены графика с дистанции на время
+    public void changeOnTime(View view) { //метод смены графика с дистанции на время
 
-        mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = mCharts.edit();
+        sharedPreferencesForCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferencesForCharts.edit();
         editor.putString(APP_PREFERENCES_TYPE_CHART, "0");
         editor.apply();
 
-        Button time = findViewById(R.id.button17);
-        Button distance = findViewById(R.id.button16);
+        Button time = findViewById(R.id.buttonTime);
+        Button distance = findViewById(R.id.buttonDistance);
         ButtonNoNSelect(distance);
         ButtonSelect(time);
 
 
         dataSetsDown.clear();
         dataSetsUp.clear();
-        beginsample_up = 0;
-        beginsample_down = 0;
-        endsample_up = 0;
-        endsample_down = 0;
-        timeF_distanceT = 0;
-        ChartShowALL();
-        if (ram_begin != -1) {
-            tap_point = (float) Find_Time(ram_begin);
-            ram_end = (float) Find_Time(ram_end);
-            BeginSampleClick(view);
+        beginSampleUp = 0;
+        beginSampleDown = 0;
+        endSampleUp = 0;
+        endSampleDown = 0;
+        timeOrDistance = 0;
+        showCharts();
+        if (ramBegin != -1) {
+            tapPoint = (float) findTime(ramBegin);
+            ramEnd = (float) findTime(ramEnd);
+            beginSampleClick(view);
         }
-        if (ram_end != 0) {
-            tap_point = ram_end;
-            EndSampleClick(view);
+        if (ramEnd != 0) {
+            tapPoint = ramEnd;
+            endSampleClick(view);
         }
-        tap_point = 0;
+        tapPoint = 0;
     }
 
-    public void Сhange_distance(View view) { //метод смены графика с времени на дистанцию
+    public void changeOnDistance(View view) { //метод смены графика с времени на дистанцию
 
-        mCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = mCharts.edit();
+        sharedPreferencesForCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferencesForCharts.edit();
         editor.putString(APP_PREFERENCES_TYPE_CHART, "1");
         editor.apply();
 
-        Button time = findViewById(R.id.button17);
-        Button distance = findViewById(R.id.button16);
+        Button time = findViewById(R.id.buttonTime);
+        Button distance = findViewById(R.id.buttonDistance);
         ButtonNoNSelect(time);
         ButtonSelect(distance);
 
         dataSetsDown.clear();
         dataSetsUp.clear();
-        beginsample_up = 0;
-        beginsample_down = 0;
-        endsample_up = 0;
-        endsample_down = 0;
-        timeF_distanceT = 1;
-        ChartShowALL();
-        if (ram_begin != -1) {
-            tap_point = (float) Find_Distance(ram_begin);
-            ram_end = (float) Find_Distance(ram_end);
-            BeginSampleClick(view);
+        beginSampleUp = 0;
+        beginSampleDown = 0;
+        endSampleUp = 0;
+        endSampleDown = 0;
+        timeOrDistance = 1;
+        showCharts();
+        if (ramBegin != -1) {
+            tapPoint = (float) findDistance(ramBegin);
+            ramEnd = (float) findDistance(ramEnd);
+            beginSampleClick(view);
         }
-        if (ram_end != 0) {
-            tap_point = ram_end;
-            EndSampleClick(view);
+        if (ramEnd != 0) {
+            tapPoint = ramEnd;
+            endSampleClick(view);
         }
-        tap_point = 0;
+        tapPoint = 0;
     }
 
 
@@ -766,73 +761,87 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     }
 
 
-    private void ChartShowALL() { //метод построения графиков
-        for (int rower = 0; rower < countOpenFiles; rower++) {
+    private void showCharts() { //метод построения графиков
+        int[] chartColors = new int[]{ //цвета для графиков
+                ColorTemplate.VORDIPLOM_COLORS[0],
+                ColorTemplate.VORDIPLOM_COLORS[1],
+                ColorTemplate.VORDIPLOM_COLORS[2],
+                ColorTemplate.VORDIPLOM_COLORS[3],
+                ColorTemplate.VORDIPLOM_COLORS[4],
+                ColorTemplate.VORDIPLOM_COLORS[5],
+                ColorTemplate.VORDIPLOM_COLORS[6],
+                ColorTemplate.VORDIPLOM_COLORS[7],
+                ColorTemplate.VORDIPLOM_COLORS[8],
+                ColorTemplate.VORDIPLOM_COLORS[9]
+        };
+
+        float LINE_WIDTH = 2.5f;
+        float CIRCLE_RADIUS = 6f;
+
+        for (int rower = 0; rower < chartName.size(); rower++) {
             List<List<Entry>> dataForChart = rowerDBHelper.getDataFotDrawing(
+                    chartName.get(rower),
                     rower,
-                    max_power,
-                    timeF_distanceT,
-                    max_absolut,
-                    max_stroke_rate);
-            LineDataSet d = new LineDataSet(dataForChart.get(0), chart_name_name[rower]);
-
-            d.setLineWidth(2.5f);
-            d.setCircleRadius(6f);
-
-            int color = mColors1[rower % mColors1.length];
-            d.setColor(color);
-            d.setCircleColor(color);
-            dataSetsDown.add(d);
-
+                    maxPower,
+                    timeOrDistance,
+                    maxSpeed,
+                    maxStrokeRate);
             if (rower == 0) { //цикл для построения верхних графиков
-                LineDataSet d2 = new LineDataSet(dataForChart.get(1), "Скорость");
-                d2.setLineWidth(2.5f);
-                d2.setCircleRadius(6f);
+                LineDataSet lineDataSetUp = new LineDataSet(dataForChart.get(1), "Скорость");
+                lineDataSetUp.setLineWidth(LINE_WIDTH);
+                lineDataSetUp.setCircleRadius(CIRCLE_RADIUS);
 
-                int color2 = mColors1[8];
-                d2.setColor(color2);
-                d2.setCircleColor(color2);
-                dataSetsUp.add(d2);
+                int color2 = chartColors[8];
+                lineDataSetUp.setColor(color2);
+                lineDataSetUp.setCircleColor(color2);
+                dataSetsUp.add(lineDataSetUp);
 
-                d2 = new LineDataSet(dataForChart.get(2), "Темп гребли");
-                d2.setLineWidth(2.5f);
-                d2.setCircleRadius(6f);
+                lineDataSetUp = new LineDataSet(dataForChart.get(2), "Темп гребли");
+                lineDataSetUp.setLineWidth(LINE_WIDTH);
+                lineDataSetUp.setCircleRadius(CIRCLE_RADIUS);
 
-                color2 = mColors1[9];
-                d2.setColor(color2);
-                d2.setCircleColor(color2);
-                dataSetsUp.add(d2);
+                color2 = chartColors[9];
+                lineDataSetUp.setColor(color2);
+                lineDataSetUp.setCircleColor(color2);
+                dataSetsUp.add(lineDataSetUp);
             }
+            LineDataSet lineDataSetDown = new LineDataSet(dataForChart.get(0), chartName.get(rower));
+
+            lineDataSetDown.setLineWidth(LINE_WIDTH);
+            lineDataSetDown.setCircleRadius(CIRCLE_RADIUS);
+
+            int color = chartColors[rower % chartColors.length];
+            lineDataSetDown.setColor(color);
+            lineDataSetDown.setCircleColor(color);
+            dataSetsDown.add(lineDataSetDown);
         }
 
         //строим графики
-        ChartShowUp(dataSetsUp);
-        ChartShowDown(dataSetsDown);
+        chartShowUp(dataSetsUp);
+        chartShowDown(dataSetsDown);
     }
 
-    private void ChartShowUp(ArrayList<ILineDataSet> dataSetsDown) { //задаем настройки отображения и строим график
-        mChartUp = findViewById(R.id.chartUp);
-
-        mChartUp.setDrawGridBackground(false);
-        mChartUp.getDescription().setEnabled(false);
-        mChartUp.setDrawBorders(true);
-
-        mChartUp.getAxisLeft().setEnabled(true);
-        mChartUp.getAxisRight().setDrawAxisLine(false);
-        mChartUp.getAxisRight().setDrawGridLines(false);
-        mChartUp.getXAxis().setDrawAxisLine(false);
-        mChartUp.getXAxis().setDrawGridLines(false);
-        if (timeF_distanceT == 0) {
-            mChartUp.getXAxis().setValueFormatter(new HourAxisValueFormatter(0));
+    private void chartShowUp(ArrayList<ILineDataSet> dataSetsDown) { //задаем настройки отображения и строим график
+        chartUp = findViewById(R.id.chartUp);
+        chartUp.setDrawGridBackground(false);
+        chartUp.getDescription().setEnabled(false);
+        chartUp.setDrawBorders(true);
+        chartUp.getAxisLeft().setEnabled(true);
+        chartUp.getAxisRight().setDrawAxisLine(false);
+        chartUp.getAxisRight().setDrawGridLines(false);
+        chartUp.getXAxis().setDrawAxisLine(false);
+        chartUp.getXAxis().setDrawGridLines(false);
+        if (timeOrDistance == 0) {
+            chartUp.getXAxis().setValueFormatter(new HourAxisValueFormatter(0));
         } else {
-            mChartUp.getXAxis().setValueFormatter(new DefaultAxisValueFormatter(0));
+            chartUp.getXAxis().setValueFormatter(new DefaultAxisValueFormatter(0));
         }
 
-        mChartUp.setOnChartValueSelectedListener(new OnChartValueSelectedListener() { //слушатель клика по графку
+        chartUp.setOnChartValueSelectedListener(new OnChartValueSelectedListener() { //слушатель клика по графку
             @Override
             public void onValueSelected(Entry e, Highlight h) {
-                tap_point = e.getX();
-                sample_show();
+                tapPoint = e.getX();
+                sampleShow();
             }
 
             @Override
@@ -840,8 +849,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
             }
         });
-
-        mChartUp.setOnChartGestureListener(new OnChartGestureListener() {
+        chartUp.setOnChartGestureListener(new OnChartGestureListener() {
             @Override
             public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
 
@@ -849,7 +857,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
             @Override
             public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
-                syncCharts(mChartUp, mChartDown);
+                syncCharts(chartUp, chartDown);
             }
 
             @Override
@@ -874,57 +882,54 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
             @Override
             public void onChartScale(MotionEvent me, float scaleX, float scaleY) {
-                syncCharts(mChartUp, mChartDown);
+                syncCharts(chartUp, chartDown);
 
             }
 
             @Override
             public void onChartTranslate(MotionEvent me, float dX, float dY) {
-                syncCharts(mChartUp, mChartDown);
+                syncCharts(chartUp, chartDown);
             }
         });
 
-        mChartUp.setPinchZoom(false);
-        mChartUp.setScaleYEnabled(false);
+        chartUp.setPinchZoom(false);
+        chartUp.setScaleYEnabled(false);
 
+        Legend legend = chartUp.getLegend();
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
+        legend.setOrientation(Legend.LegendOrientation.VERTICAL);
+        legend.setDrawInside(true);
 
-        Legend l1 = mChartUp.getLegend();
-        l1.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
-        l1.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
-        l1.setOrientation(Legend.LegendOrientation.VERTICAL);
-        l1.setDrawInside(true);
+        chartUp.resetTracking();
 
-        mChartUp.resetTracking();
-
-        LineData data = new LineData(dataSetsDown);
-        data.setDrawValues(false);
-        mChartUp.setData(data);
-        mChartUp.invalidate();
+        LineData lineData = new LineData(dataSetsDown);
+        lineData.setDrawValues(false);
+        chartUp.setData(lineData);
+        chartUp.invalidate();
     }
 
-    private void ChartShowDown(final ArrayList<ILineDataSet> dataSetsUp) { //задаем настройки отображения и строим график
-        mChartDown = findViewById(R.id.chartDown);
-
-        mChartDown.setDrawGridBackground(false);
-        mChartDown.getDescription().setEnabled(false);
-        mChartDown.setDrawBorders(true);
-
-        mChartDown.getAxisLeft().setEnabled(true);
-        mChartDown.getAxisRight().setDrawAxisLine(false);
-        mChartDown.getAxisRight().setDrawGridLines(false);
-        mChartDown.getXAxis().setDrawAxisLine(false);
-        mChartDown.getXAxis().setDrawGridLines(false);
-        if (timeF_distanceT == 0) {
-            mChartDown.getXAxis().setValueFormatter(new HourAxisValueFormatter(0));
+    private void chartShowDown(final ArrayList<ILineDataSet> dataSetsUp) { //задаем настройки отображения и строим график
+        chartDown = findViewById(R.id.chartDown);
+        chartDown.setDrawGridBackground(false);
+        chartDown.getDescription().setEnabled(false);
+        chartDown.setDrawBorders(true);
+        chartDown.getAxisLeft().setEnabled(true);
+        chartDown.getAxisRight().setDrawAxisLine(false);
+        chartDown.getAxisRight().setDrawGridLines(false);
+        chartDown.getXAxis().setDrawAxisLine(false);
+        chartDown.getXAxis().setDrawGridLines(false);
+        if (timeOrDistance == 0) {
+            chartDown.getXAxis().setValueFormatter(new HourAxisValueFormatter(0));
         } else {
-            mChartDown.getXAxis().setValueFormatter(new DefaultAxisValueFormatter(0));
+            chartDown.getXAxis().setValueFormatter(new DefaultAxisValueFormatter(0));
         }
 
-        mChartDown.setOnChartValueSelectedListener(new OnChartValueSelectedListener() { //слушатель клика по графку
+        chartDown.setOnChartValueSelectedListener(new OnChartValueSelectedListener() { //слушатель клика по графку
             @Override
             public void onValueSelected(Entry e, Highlight h) {
-                tap_point = e.getX();
-                sample_show();
+                tapPoint = e.getX();
+                sampleShow();
             }
 
             @Override
@@ -933,7 +938,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
             }
         });
 
-        mChartDown.setOnChartGestureListener(new OnChartGestureListener() {
+        chartDown.setOnChartGestureListener(new OnChartGestureListener() {
             @Override
             public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
 
@@ -966,107 +971,87 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
             @Override
             public void onChartScale(MotionEvent me, float scaleX, float scaleY) {
-                syncCharts(mChartDown, mChartUp);
+                syncCharts(chartDown, chartUp);
 
             }
 
             @Override
             public void onChartTranslate(MotionEvent me, float dX, float dY) {
-                syncCharts(mChartDown, mChartUp);
+                syncCharts(chartDown, chartUp);
             }
         });
 
-        mChartDown.setPinchZoom(false);
-        mChartDown.setScaleYEnabled(false);
+        chartDown.setPinchZoom(false);
+        chartDown.setScaleYEnabled(false);
 
 
-        Legend l2 = mChartDown.getLegend();
-        l2.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
-        l2.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
-        l2.setOrientation(Legend.LegendOrientation.VERTICAL);
-        l2.setDrawInside(true);
+        Legend legend = chartDown.getLegend();
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
+        legend.setOrientation(Legend.LegendOrientation.VERTICAL);
+        legend.setDrawInside(true);
 
-        mChartDown.resetTracking();
+        chartDown.resetTracking();
 
-
-        LineData data2 = new LineData(dataSetsUp);
-        data2.setDrawValues(false);
-        mChartDown.setData(data2);
-        mChartDown.invalidate();
+        LineData lineData = new LineData(dataSetsUp);
+        lineData.setDrawValues(false);
+        chartDown.setData(lineData);
+        chartDown.invalidate();
     }
 
-    private int[] mColors1 = new int[]{ //цвета для графиков
-            ColorTemplate.VORDIPLOM_COLORS[0],
-            ColorTemplate.VORDIPLOM_COLORS[1],
-            ColorTemplate.VORDIPLOM_COLORS[2],
-            ColorTemplate.VORDIPLOM_COLORS[3],
-            ColorTemplate.VORDIPLOM_COLORS[4],
-            ColorTemplate.VORDIPLOM_COLORS[5],
-            ColorTemplate.VORDIPLOM_COLORS[6],
-            ColorTemplate.VORDIPLOM_COLORS[7],
-            ColorTemplate.VORDIPLOM_COLORS[8],
-            ColorTemplate.VORDIPLOM_COLORS[9]
-    };
+    private void sampleShow() { //метод для отображения времени и дистанции по клику или при фиксировании выборки
+        TextView timeSample = findViewById(R.id.timesample);
+        TextView distanceSample = findViewById(R.id.distancesample);
+        double correctDistance = new Double(7.1);
+        double correctTime = new Double(10.1);
 
-    private int[] mColors2 = new int[]{
-            ColorTemplate.COLORFUL_COLORS[0],
-            ColorTemplate.COLORFUL_COLORS[1]
-    };
+        if (ramBegin != -1 && ramEnd != 0) { //если зафиксирована выборка
+            double start;
+            double end;
+            if (timeOrDistance == 0) {
+                start = findDistance(ramBegin);
+                end = findDistance(ramEnd);
+                correctDistance = end - start;
 
-    private void sample_show() { //метод для отображения времени и дистанции по клику или при фиксировании выборки
-
-        TextView timesample = findViewById(R.id.timesample);
-        TextView distancesample = findViewById(R.id.distancesample);
-
-        if (ram_begin != -1 && ram_end != 0) { //если зафиксирована выборка
-            double start = 0;
-            double end = 0;
-            if (timeF_distanceT == 0) {
-                start = Find_Distance(ram_begin);
-                end = Find_Distance(ram_end);
-                correct_distance = end - start;
-
-                start = Find_Time(start);
-                end = Find_Time(end);
-                correct_time = end - start;
-
+                start = findTime(start);
+                end = findTime(end);
+                correctTime = end - start;
             } else {
-                start = Find_Time(ram_begin);
-                end = Find_Time(ram_end);
-                correct_time = end - start;
-                correct_distance = ram_end - ram_begin;
+                start = findTime(ramBegin);
+                end = findTime(ramEnd);
+                correctTime = end - start;
+                correctDistance = ramEnd - ramBegin;
             }
-
         } else { //если выборки нет, показываем значения по тапу на графике
-            if (tap_point > 0) {
-                if (timeF_distanceT == 0) {
-                    correct_distance = Find_Distance(tap_point);
-                    correct_time = Find_Time(correct_distance);
+            if (tapPoint > 0) {
+                if (timeOrDistance == 0) {
+                    correctDistance = findDistance(tapPoint);
+                    correctTime = findTime(correctDistance);
                 } else {
-                    correct_time = Find_Time(tap_point);
-                    correct_distance = Find_Distance(correct_time);
+                    correctTime = findTime(tapPoint);
+                    correctDistance = findDistance(correctTime);
                 }
             }
         }
         String pattern = "##0.0";
         DecimalFormat decimalFormat = new DecimalFormat(pattern);
-        String format = decimalFormat.format(correct_distance);
-        distancesample.setText(format);
+        String format = decimalFormat.format(correctDistance);
+        distanceSample.setText(format);
 
-        long itemLong = (long) (correct_time);
+        long itemLong = (long) (correctTime);
         Date itemDate = new Date(itemLong);
-        SimpleDateFormat timeFormat = new SimpleDateFormat("mm:ss.S");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("mm:ss.S", Locale.getDefault());
         timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         String itemDateStr = timeFormat.format(itemDate);
-        timesample.setText(itemDateStr);
+        timeSample.setText(itemDateStr);
     }
 
-    private double Find_Time(double point) { //метод поиска времени по дистанции
-        return correct_time = rowerDBHelper.getTime(point);
+    private double findTime(double point) { //метод поиска времени по дистанции
+        return rowerDBHelper.getTime(point);
     }
 
-    private double Find_Distance(double point) { //метод поиска дистанции по времени
-        return correct_distance = rowerDBHelper.getDistance(point);
+    private double findDistance(double point) { //метод поиска дистанции по времени
+        return rowerDBHelper.getDistance(point);
     }
 
     private void ButtonSelect(Button button){ //метод выбора кнопки

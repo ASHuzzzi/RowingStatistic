@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:drawable/btn_default"
-            android:onClick="BeginSampleClick"
+            android:onClick="beginSampleClick"
             android:text="@string/start_sampling" />
 
         <Button
@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:drawable/btn_default"
-            android:onClick="EndSampleClick"
+            android:onClick="endSampleClick"
             android:text="@string/finish_sampling" />
 
         <Button
@@ -35,7 +35,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:drawable/btn_default"
-            android:onClick="EditPeriodClick"
+            android:onClick="editPeriod"
             android:text="@string/process" />
 
         <Button
@@ -46,7 +46,7 @@
             android:layout_alignParentStart="true"
             android:layout_gravity="bottom"
             android:background="@android:drawable/btn_default"
-            android:onClick="Whrite_file"
+            android:onClick="writeInFile"
             android:text="@string/save_file"
             tools:ignore="ObsoleteLayoutParam" />
 
@@ -96,22 +96,22 @@
             android:orientation="vertical">
 
             <Button
-                android:id="@+id/button17"
+                android:id="@+id/buttonTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_weight="1"
-                android:onClick="Сhange_time"
+                android:onClick="changeOnTime"
                 android:text="@string/time"
                 tools:ignore="ButtonStyle" />
 
             <Button
-                android:id="@+id/button16"
+                android:id="@+id/buttonDistance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_weight="1"
-                android:onClick="Сhange_distance"
+                android:onClick="changeOnDistance"
                 android:text="@string/distance"
                 tools:ignore="ButtonStyle" />
         </LinearLayout>

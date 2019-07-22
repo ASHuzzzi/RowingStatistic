@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.AsyncTaskLoader;
 
-public class FileLoader extends AsyncTaskLoader<Boolean> {
+public class FileLoader extends AsyncTaskLoader<String> {
 
     private String fileLocation;
     private String fileNumber;
@@ -19,12 +19,11 @@ public class FileLoader extends AsyncTaskLoader<Boolean> {
 
     @Nullable
     @Override
-    public Boolean loadInBackground() {
+    public String loadInBackground() {
         Parser parser = new Parser(
                 getContext(),
                 fileLocation,
                 fileNumber);
-        parser.parseFile();
-        return true;
+        return parser.parseFile();
     }
 }

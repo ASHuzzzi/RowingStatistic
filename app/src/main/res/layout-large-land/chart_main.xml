@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:drawable/btn_default"
-            android:onClick="BeginSampleClick"
+            android:onClick="beginSampleClick"
             android:text="@string/start_sampling"
             android:textSize="@dimen/txt_size_14" />
 
@@ -28,7 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:drawable/btn_default"
-            android:onClick="EndSampleClick"
+            android:onClick="endSampleClick"
             android:text="@string/finish_sampling"
             android:textSize="@dimen/txt_size_14" />
 
@@ -37,7 +37,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:drawable/btn_default"
-            android:onClick="EditPeriodClick"
+            android:onClick="editPeriod"
             android:text="@string/process"
             android:textSize="@dimen/txt_size_14" />
 
@@ -49,7 +49,7 @@
             android:layout_alignParentStart="true"
             android:layout_gravity="bottom"
             android:background="@android:drawable/btn_default"
-            android:onClick="Whrite_file"
+            android:onClick="writeInFile"
             android:text="@string/save_file"
             android:textSize="@dimen/txt_size_14"
             tools:ignore="ObsoleteLayoutParam" />
@@ -96,23 +96,23 @@
             android:orientation="vertical">
 
             <Button
-                android:id="@+id/button17"
+                android:id="@+id/buttonTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_weight="1"
-                android:onClick="Сhange_time"
+                android:onClick="changeOnTime"
                 android:text="@string/time"
                 android:textSize="@dimen/txt_size_14"
                 tools:ignore="ButtonStyle" />
 
             <Button
-                android:id="@+id/button16"
+                android:id="@+id/buttonDistance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_weight="1"
-                android:onClick="Сhange_distance"
+                android:onClick="changeOnDistance"
                 android:text="@string/distance"
                 android:textSize="@dimen/txt_size_14"
                 tools:ignore="ButtonStyle" />
