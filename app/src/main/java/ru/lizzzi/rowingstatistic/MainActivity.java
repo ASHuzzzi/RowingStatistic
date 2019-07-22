@@ -25,8 +25,6 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
-
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<String> {
 
     //файл с полями для запоминания последней открытой папки
@@ -91,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                                         queueOnLoad.add(fileName);
                                         rowers.add("Load");
                                         if (queueOnLoad.size() == 1) {
-                                            adapter = new Adapter(getApplicationContext(), rowers);
+                                            adapter = new Adapter(MainActivity.this, rowers);
                                             LinearLayoutManager layoutManager =
                                                     new LinearLayoutManager(getApplicationContext());
                                             recyclerView.setLayoutManager(layoutManager);
@@ -117,8 +115,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void onClick(View v) {
                 if (rowers.size() > 0) {
-                    Intent intent = new Intent(MainActivity.this, ChartActivity.class);
-                    startActivity(intent);
+                    if (rowers.get(rowers.size()-1).contains("Load")) {
+                        toastShow("Дождитесь окончания загрузки файлов");
+                    } else {
+                        Intent intent = new Intent(MainActivity.this, ChartActivity.class);
+                        startActivity(intent);
+                    }
                 } else {
                     toastShow("Вы не загрузили ни один из файлов!");
                 }
@@ -145,8 +147,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onStart(){
         super.onStart();
         //отчищаем БД от записей на случай некорректного закрытия приложения в прошлый раз
-        RowerDBHelper rowerDBHelper = new RowerDBHelper(this);
-        rowerDBHelper.clearDB();
+        SQLiteStorage SQLiteStorage = new SQLiteStorage(this);
+        SQLiteStorage.clearDB();
         //показываем по какому значения будут построены графики
         sharedPreferencesCharts =
                 this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
@@ -254,5 +256,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private void toastShow(String textToShow) {
         Toast.makeText(getApplicationContext(), textToShow, Toast.LENGTH_LONG).show();
+    }
+
+    public void renameChart(String oldName, String newName) {
+        SQLiteStorage sqlStorage = new SQLiteStorage(this);
+        sqlStorage.setNewRowerName(oldName, newName);
     }
 }

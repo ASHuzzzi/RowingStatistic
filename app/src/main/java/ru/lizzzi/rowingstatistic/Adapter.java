@@ -1,8 +1,8 @@
 package ru.lizzzi.rowingstatistic;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,10 +14,10 @@ import java.util.List;
 
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     private List<String> rowersName;
-    private Context context;
+    private MainActivity mainActivity;
 
-    public Adapter(Context context, @NonNull List<String> rowersName) {
-        this.context = context;
+    public Adapter(MainActivity mainActivity, @NonNull List<String> rowersName) {
+        this.mainActivity = mainActivity;
         this.rowersName = rowersName;
     }
 
@@ -34,7 +34,6 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
         }
     }
 
-
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
@@ -43,9 +42,9 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
-        int newPosition = position + 1;
-        String caption = context.getResources().getString(R.string.chartCaption) + newPosition;
+    public void onBindViewHolder(@NonNull final ViewHolder viewHolder, int position) {
+        final int newPosition = position + 1;
+        String caption = mainActivity.getResources().getString(R.string.chartCaption) + newPosition;
         viewHolder.textCaption.setText(caption);
         if (rowersName.get(position).contains("Load")) {
             viewHolder.progressBar.setVisibility(View.VISIBLE);
@@ -54,6 +53,19 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
             viewHolder.progressBar.setVisibility(View.GONE);
             viewHolder.editCaption.setText(rowersName.get(position));
             viewHolder.editCaption.setVisibility(View.VISIBLE);
+            viewHolder.editCaption.setOnKeyListener(new View.OnKeyListener() {
+                @Override
+                public boolean onKey(View v, int keyCode, KeyEvent event) {
+                    if ((event.getAction() == KeyEvent.ACTION_DOWN)
+                            && (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                        mainActivity.renameChart(
+                                rowersName.get(newPosition - 1),
+                                viewHolder.editCaption.getText().toString());
+                        return true;
+                    }
+                    return false;
+                }
+            });
         }
     }
 

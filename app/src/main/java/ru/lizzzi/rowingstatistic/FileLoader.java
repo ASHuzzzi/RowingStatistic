@@ -20,10 +20,10 @@ public class FileLoader extends AsyncTaskLoader<String> {
     @Nullable
     @Override
     public String loadInBackground() {
-        Parser parser = new Parser(
+        FileParser fileParser = new FileParser(
                 getContext(),
                 fileLocation,
                 fileNumber);
-        return parser.parseFile();
+        return fileParser.parseFile();
     }
 }

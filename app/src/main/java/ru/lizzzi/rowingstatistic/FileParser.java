@@ -18,15 +18,13 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.TimeZone;
 
-import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
-
-public class Parser {
+public class FileParser {
 
     private String fileLocation;
     private String fileNumber;
     private Context context;
 
-    public Parser(Context context, String fileLocation, String fileNumber) {
+    public FileParser(Context context, String fileLocation, String fileNumber) {
         this.context = context;
         this.fileLocation = fileLocation;
         this.fileNumber = fileNumber;
@@ -141,8 +139,8 @@ public class Parser {
                     isIncorrectRow = false;
                 }
                 reader.close();
-                RowerDBHelper rowerDBHelper = new RowerDBHelper(context);
-                rowerDBHelper.saveData(listForDB);
+                SQLiteStorage sqlStorage = new SQLiteStorage(context);
+                sqlStorage.saveData(listForDB);
                 Log.d("LoadFile", "Окончание загрузки " + fileNumber + " спортсмена");
             }
         } catch (FileNotFoundException e) {

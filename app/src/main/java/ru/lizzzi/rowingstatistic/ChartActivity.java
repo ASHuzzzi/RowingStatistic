@@ -44,8 +44,6 @@ import ru.lizzzi.rowingstatistic.charts.listener.OnChartValueSelectedListener;
 import ru.lizzzi.rowingstatistic.charts.notimportant.DemoBase;
 import ru.lizzzi.rowingstatistic.charts.utils.ColorTemplate;
 
-import ru.lizzzi.rowingstatistic.db.data.RowerDBHelper;
-
 public class ChartActivity extends DemoBase implements OnChartValueSelectedListener {
 
     //файл с полями для запоминания последней открытой папки
@@ -87,7 +85,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
     private Button buttonTime;
     private Button buttonDistance;
-    private RowerDBHelper rowerDBHelper;
+    private SQLiteStorage sqlStorage;
     private List<String> chartName = new ArrayList<>();
 
     private int[] colorsForSample = new int[]{
@@ -122,7 +120,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
             }
         });
 
-        rowerDBHelper = new RowerDBHelper(this);
+        sqlStorage = new SQLiteStorage(this);
     }
 
     @Override
@@ -132,15 +130,15 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         sharedPreferencesForCharts =
                 this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
         timeOrDistance = (sharedPreferencesForCharts.getInt(APP_PREFERENCES_TYPE_CHART, 0));
-        maxPower = rowerDBHelper.getMaxPower();
-        maxSpeed = rowerDBHelper.getMaxSpeed();
-        maxTime = rowerDBHelper.getMaxTime();
-        minTime = rowerDBHelper.getMinTime();
-        maxDistance = rowerDBHelper.getMaxDistance();
+        maxPower = sqlStorage.getMaxPower();
+        maxSpeed = sqlStorage.getMaxSpeed();
+        maxTime = sqlStorage.getMaxTime();
+        minTime = sqlStorage.getMinTime();
+        maxDistance = sqlStorage.getMaxDistance();
         minDistance = 0;
-        maxStrokeRate = rowerDBHelper.getMaxStrokeRate();
+        maxStrokeRate = sqlStorage.getMaxStrokeRate();
 
-        chartName = rowerDBHelper.getRowerName();
+        chartName = sqlStorage.getRowerName();
         showCharts();  //строим графики
         int typeChart = sharedPreferencesForCharts.getInt(APP_PREFERENCES_TYPE_CHART, 1);
         int TIME = 0;
@@ -161,7 +159,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                 this.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
         sharedPreferencesForSettings.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
         //отчищаем базу
-        rowerDBHelper.clearDB();
+        sqlStorage.clearDB();
     }
 
 
@@ -419,7 +417,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     public void editPeriod(View view) { //метод обработки выборки
 
         if (ramBegin > -1 && ramEnd > 0) { //проверка на наличие начала и конца выборки
-            final RowerDBHelper mDBHelper = new RowerDBHelper(this);
+            final SQLiteStorage mDBHelper = new SQLiteStorage(this);
 
             //сначала создаем поле для ввода комментария
             LayoutInflater li = LayoutInflater.from(this);
@@ -444,11 +442,11 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                                     //цикл для взятия среднего значения
                                     for (int rower = 0; rower < chartName.size(); rower++) { //для каждого пловца
                                         float average = (timeOrDistance == 0)
-                                                ? rowerDBHelper.getAverageTime(
+                                                ? sqlStorage.getAverageTime(
                                                         rower,
                                                         ramBegin,
                                                         ramEnd)
-                                                : rowerDBHelper.getAverageDistance(
+                                                : sqlStorage.getAverageDistance(
                                                         rower,
                                                         ramBegin,
                                                         ramEnd);
@@ -779,7 +777,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         float CIRCLE_RADIUS = 6f;
 
         for (int rower = 0; rower < chartName.size(); rower++) {
-            List<List<Entry>> dataForChart = rowerDBHelper.getDataFotDrawing(
+            List<List<Entry>> dataForChart = sqlStorage.getDataFotDrawing(
                     chartName.get(rower),
                     rower,
                     maxPower,
@@ -1047,11 +1045,11 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     }
 
     private double findTime(double point) { //метод поиска времени по дистанции
-        return rowerDBHelper.getTime(point);
+        return sqlStorage.getTime(point);
     }
 
     private double findDistance(double point) { //метод поиска дистанции по времени
-        return rowerDBHelper.getDistance(point);
+        return sqlStorage.getDistance(point);
     }
 
     private void ButtonSelect(Button button){ //метод выбора кнопки

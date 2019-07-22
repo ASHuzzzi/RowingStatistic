@@ -1,19 +1,19 @@
-package ru.lizzzi.rowingstatistic.db.data;
+package ru.lizzzi.rowingstatistic;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import ru.lizzzi.rowingstatistic.charts.data.Entry;
-import ru.lizzzi.rowingstatistic.db.data.RowerContract.RowerData;
 
-public class RowerDBHelper extends SQLiteOpenHelper {
+public class SQLiteStorage extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "rower.db";
     private static final int DATABASE_VERSION = 1;
@@ -21,7 +21,7 @@ public class RowerDBHelper extends SQLiteOpenHelper {
     private Context context;
 
 
-    public RowerDBHelper(Context context) {
+    public SQLiteStorage(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.context = context;
     }
@@ -29,17 +29,13 @@ public class RowerDBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String SQL_CREATE_ROWER_TABLE = "CREATE TABLE " + RowerData.TABLE_NAME + " ("
-                + RowerData._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + RowerData.COLUMN_ROWER + " TEXT NOT NULL, "
                 + RowerData.COLUMN_DISTANCE + " REAL NOT NULL, "
                 + RowerData.COLUMN_TIME + " INTEGER NOT NULL, "
                 + RowerData.COLUMN_SPEED + " REAL NOT NULL, "
                 + RowerData.COLUMN_STROKE_RATE + " INTEGER NOT NULL, "
                 + RowerData.COLUMN_POWER + " INTEGER NOT NULL);";
-
-        // Запускаем создание таблицы
         db.execSQL(SQL_CREATE_ROWER_TABLE);
-
     }
 
     @Override
@@ -314,7 +310,7 @@ public class RowerDBHelper extends SQLiteOpenHelper {
 
     public float getAverageDistance(int rower, float periodStart, float periodEnd) {
         database = this.getReadableDatabase();
-        String[] columns = {"AVG(" + RowerContract.RowerData.COLUMN_POWER + ")"};
+        String[] columns = {"AVG(" + RowerData.COLUMN_POWER + ")"};
 
         //для пловца № в промежутке выборки
         /*ввиду того, что беру тип переменной float (а она имеет плохую точность)
@@ -331,7 +327,7 @@ public class RowerDBHelper extends SQLiteOpenHelper {
                 (periodEnd + 0.01);
         String[] selectionArgs = {String.valueOf(rower)};
         Cursor cursor = database.query(
-                RowerContract.RowerData.TABLE_NAME,  // таблица
+                RowerData.TABLE_NAME,  // таблица
                 columns,            // столбцы
                 selection,             // столбцы для условия WHERE
                 selectionArgs,         // значения для условия WHERE
@@ -374,5 +370,24 @@ public class RowerDBHelper extends SQLiteOpenHelper {
         }
         database.close();
         return result;
+    }
+
+    public void setNewRowerName(String oldName, String newName) {
+        database = this.getReadableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(RowerData.COLUMN_ROWER, newName);
+        String whereClause = RowerData.COLUMN_ROWER + "=?";
+        String[] selectionArgs = {oldName};
+        database.update(RowerData.TABLE_NAME, values, whereClause, selectionArgs);
+    }
+
+    public static final class RowerData implements BaseColumns {
+        final static String TABLE_NAME = "training";
+        final static String COLUMN_ROWER = "rower";
+        final static String COLUMN_DISTANCE = "distance";
+        final static String COLUMN_TIME = "time";
+        final static String COLUMN_SPEED = "speed";
+        final static String COLUMN_STROKE_RATE = "strokerate";
+        final static String COLUMN_POWER = "power";
     }
 }
