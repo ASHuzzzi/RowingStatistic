@@ -1,6 +1,9 @@
 package ru.lizzzi.rowingstatistic;
 
 import android.Manifest;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,14 +12,12 @@ import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -25,7 +26,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<String> {
+public class MainActivity extends AppCompatActivity {
 
     //файл с полями для запоминания последней открытой папки
     public static final String APP_PREFERENCES = "lastdir";
@@ -41,11 +42,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private Button buttonDistance;
     private Button buttonTime;
     private String loadedFile;
-    private List<String> queueOnLoad = new ArrayList<>();
     private RecyclerView recyclerView;
     private Adapter adapter;
     private List<String> rowers = new ArrayList<>();
     private int MAX_OPEN_FILE = 8;
+    private SQLiteStorage sqlStorage;
+    private MyViewModel model;
+    private LiveData<List<String>> data;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,15 +89,25 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                                 public void OnSelectedFile(String fileName, String file) {
                                     if (!fileName.equals(loadedFile)) {
                                         loadedFile = fileName;
-                                        queueOnLoad.add(fileName);
                                         rowers.add("Load");
-                                        if (queueOnLoad.size() == 1) {
+                                        data = model.getData(fileName);
+                                        if (rowers.size() == 1) {
                                             adapter = new Adapter(MainActivity.this, rowers);
                                             LinearLayoutManager layoutManager =
                                                     new LinearLayoutManager(getApplicationContext());
                                             recyclerView.setLayoutManager(layoutManager);
                                             recyclerView.setAdapter(adapter);
-                                            startFileLoaders();
+                                            data.observe(MainActivity.this, new Observer<List<String>>() {
+                                                @Override
+                                                public void onChanged(@Nullable List<String> loadedData) {
+                                                    if (loadedData != null) {
+                                                        for (int i = 0; i < loadedData.size(); i++) {
+                                                            rowers.set(i, loadedData.get(i));
+                                                        }
+                                                        adapter.notifyDataSetChanged();
+                                                    }
+                                                }
+                                            });
                                         } else {
                                             adapter.notifyDataSetChanged();
                                         }
@@ -115,10 +128,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void onClick(View v) {
                 if (rowers.size() > 0) {
-                    if (rowers.get(rowers.size()-1).contains("Load")) {
+                    if (rowers.get(rowers.size() - 1).contains("Load")) {
                         toastShow("Дождитесь окончания загрузки файлов");
                     } else {
-                        Intent intent = new Intent(MainActivity.this, ChartActivity.class);
+                        Intent intent = new Intent(
+                                MainActivity.this,
+                                ChartActivity.class);
                         startActivity(intent);
                     }
                 } else {
@@ -127,6 +142,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
         recyclerView = findViewById(R.id.recyclerView);
+
+        model = ViewModelProviders.of(this).get(MyViewModel.class);
+
     }
 
     @Override
@@ -147,8 +165,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onStart(){
         super.onStart();
         //отчищаем БД от записей на случай некорректного закрытия приложения в прошлый раз
-        SQLiteStorage SQLiteStorage = new SQLiteStorage(this);
-        SQLiteStorage.clearDB();
+        sqlStorage = new SQLiteStorage(this);
+        sqlStorage.clearDB();
         //показываем по какому значения будут построены графики
         sharedPreferencesCharts =
                 this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
@@ -216,50 +234,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
     }
 
-    private void startFileLoaders() {
-        if (queueOnLoad.size() > 0) {
-            Log.d(
-                    "LoadFile",
-                    "Старт загрузчика для " + rowers.size() + " спортсмена");
-            Bundle bundle = new Bundle();
-            int loaderID = rowers.size()-1;
-            bundle.putString("fileLocation", queueOnLoad.get(0));
-            bundle.putString("fileNumber", String.valueOf(queueOnLoad.size()));
-            Loader fileLoader = getSupportLoaderManager().initLoader(
-                    loaderID,
-                    bundle,
-                    this);
-            fileLoader.forceLoad();
-        }
-    }
-
-    @NonNull
-    @Override
-    public Loader<String> onCreateLoader(int loaderId, Bundle bundle) {
-        return new FileLoader(this, bundle);
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<String> loader, String chartName) {
-        rowers.set(loader.getId(), chartName);
-        adapter.notifyDataSetChanged();
-        Log.d("LoadFile", "Стоп загрузчика для " + loader.getId() + " спортсмена");
-        queueOnLoad.remove(0);
-        startFileLoaders();
-        toastShow("Файл загружен " + loader.getId());
-    }
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<String> loader) {
-
-    }
-
     private void toastShow(String textToShow) {
         Toast.makeText(getApplicationContext(), textToShow, Toast.LENGTH_LONG).show();
     }
 
     public void renameChart(String oldName, String newName) {
-        SQLiteStorage sqlStorage = new SQLiteStorage(this);
         sqlStorage.setNewRowerName(oldName, newName);
     }
 }

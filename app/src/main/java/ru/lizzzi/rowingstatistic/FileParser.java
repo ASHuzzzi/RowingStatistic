@@ -21,10 +21,10 @@ import java.util.TimeZone;
 public class FileParser {
 
     private String fileLocation;
-    private String fileNumber;
+    private int fileNumber;
     private Context context;
 
-    public FileParser(Context context, String fileLocation, String fileNumber) {
+    public FileParser(Context context, String fileLocation, int fileNumber) {
         this.context = context;
         this.fileLocation = fileLocation;
         this.fileNumber = fileNumber;
@@ -35,7 +35,6 @@ public class FileParser {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(fileLocation));
             if (reader.ready()) {
-                Log.d("LoadFile", "Старт загрузки " + fileNumber + " спортсмена");
                 String rowForScanner;
                 boolean isIncorrectRow = false;
                 int lineInFile = 0;
@@ -141,7 +140,6 @@ public class FileParser {
                 reader.close();
                 SQLiteStorage sqlStorage = new SQLiteStorage(context);
                 sqlStorage.saveData(listForDB);
-                Log.d("LoadFile", "Окончание загрузки " + fileNumber + " спортсмена");
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
