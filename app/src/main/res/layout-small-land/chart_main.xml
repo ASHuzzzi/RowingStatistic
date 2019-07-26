@@ -59,12 +59,13 @@
 
             <TextView
                 android:id="@+id/textView4"
-                style="@style/CaptionText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="0dp"
                 android:text="@string/sampll"
-                android:textAppearance="@style/CaptionText"
+                android:textColor="@color/colorBlack"
+                android:gravity="center_horizontal"
+                android:textStyle="bold"
                 android:textSize="@dimen/txt_size_7" />
 
             <LinearLayout
@@ -91,12 +92,12 @@
 
             <TextView
                 android:id="@+id/textView8"
-                style="@style/CaptionText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="0dp"
                 android:text="@string/sampl"
-                android:textSize="@dimen/txt_size_7" />
+                android:textSize="@dimen/txt_size_7"
+                />
 
             <LinearLayout
                 android:layout_width="match_parent"

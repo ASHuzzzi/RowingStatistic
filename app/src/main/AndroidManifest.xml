@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="ru.lizzzi.rowingstatistic">
 
@@ -14,7 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".SplashActivity"
+
+        <activity
+            android:name=".view.SplashActivity"
             android:theme="@style/AppTheme.Launcher"
             android:screenOrientation="landscape"
             android:noHistory="true">
@@ -25,12 +28,12 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".MainActivity"
-            android:screenOrientation="landscape"
-            android:noHistory="true">
+        <activity
+            android:name=".view.MainActivity">
         </activity>
 
-        <activity android:name=".ChartActivity"
+        <activity
+            android:name=".view.ChartActivity"
             android:screenOrientation="landscape"
             android:label="Settings">
         </activity>

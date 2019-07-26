@@ -12,6 +12,8 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import ru.lizzzi.rowingstatistic.view.MainActivity;
+
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     private List<String> rowersName;
     private MainActivity mainActivity;
@@ -44,7 +46,10 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder viewHolder, int position) {
         final int newPosition = position + 1;
-        String caption = mainActivity.getResources().getString(R.string.chartCaption) + newPosition;
+        String caption =
+                mainActivity.getResources().getString(R.string.chartCaption) +
+                " " +
+                newPosition;
         viewHolder.textCaption.setText(caption);
         if (rowersName.get(position).contains("Load")) {
             viewHolder.progressBar.setVisibility(View.VISIBLE);

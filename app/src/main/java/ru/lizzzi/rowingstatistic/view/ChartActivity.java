@@ -1,4 +1,4 @@
-package ru.lizzzi.rowingstatistic;
+package ru.lizzzi.rowingstatistic.view;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import ru.lizzzi.rowingstatistic.R;
 import ru.lizzzi.rowingstatistic.charts.charts.LineChart;
 import ru.lizzzi.rowingstatistic.charts.components.HourAxisValueFormatter;
 import ru.lizzzi.rowingstatistic.charts.components.Legend;
@@ -43,6 +44,7 @@ import ru.lizzzi.rowingstatistic.charts.listener.OnChartGestureListener;
 import ru.lizzzi.rowingstatistic.charts.listener.OnChartValueSelectedListener;
 import ru.lizzzi.rowingstatistic.charts.notimportant.DemoBase;
 import ru.lizzzi.rowingstatistic.charts.utils.ColorTemplate;
+import ru.lizzzi.rowingstatistic.data.SQLiteStorage;
 
 public class ChartActivity extends DemoBase implements OnChartValueSelectedListener {
 

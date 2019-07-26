@@ -5,20 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorWhite"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:baselineAligned="false"
     android:padding="10dp">
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="3"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/buttonFileExplorer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@android:drawable/btn_default"
             android:text="@string/load_file"
             android:textSize="@dimen/txt_size_14" />
 
@@ -33,54 +33,54 @@
             android:textStyle="bold"
             android:textSize="@dimen/txt_size_14" />
 
-        <Button
-            android:id="@+id/buttonShowChart"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:text="@string/build_chart"
-            android:textSize="@dimen/txt_size_14"
-            tools:ignore="ButtonStyle,RtlHardcoded" />
-
         <RadioGroup
-            android:layout_width="match_parent"
+            android:id="@+id/radioGroup"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/textView3">
+            android:layout_below="@id/textView3"
+            android:layout_centerHorizontal="true"
+            android:orientation="horizontal">
 
             <RadioButton
                 android:id="@+id/radioTime"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:layout_marginEnd="5dp"
-                android:layout_marginBottom="5dp"
-                android:layout_weight="1"
-                android:text="@string/time"
-                android:layoutDirection="rtl"
-                android:textAlignment="textStart"
                 android:layout_gravity="start"
+                android:layout_marginEnd="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginBottom="5dp"
+                android:layoutDirection="rtl"
+                android:text="@string/time"
+                android:textAlignment="textStart"
                 tools:ignore="RtlHardcoded" />
 
             <RadioButton
                 android:id="@+id/radioDistance"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:layout_marginEnd="5dp"
-                android:layout_weight="1"
-                android:text="@string/distance"
-                android:layoutDirection="rtl"
-                android:textAlignment="textStart"
                 android:layout_gravity="start"
+                android:layout_marginEnd="5dp"
+                android:layout_marginRight="5dp"
+                android:layoutDirection="rtl"
+                android:text="@string/distance"
+                android:textAlignment="textStart"
                 tools:ignore="RtlHardcoded" />
         </RadioGroup>
+
+        <Button
+            android:id="@+id/buttonShowChart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/radioGroup"
+            android:background="@android:drawable/btn_default"
+            android:text="@string/build_chart"
+            android:textSize="@dimen/txt_size_14"
+            tools:ignore="ButtonStyle" />
     </RelativeLayout>
 
     <View
-        android:layout_width="2dp"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="2dp"
         android:background="@color/colorPrimary"
         android:layout_marginLeft="5dp"
         android:layout_marginStart="5dp"
@@ -92,7 +92,6 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"/>
+        android:layout_height="match_parent"/>
 
 </LinearLayout>

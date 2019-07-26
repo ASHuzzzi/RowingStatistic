@@ -1,4 +1,4 @@
-package ru.lizzzi.rowingstatistic;
+package ru.lizzzi.rowingstatistic.data;
 
 import android.content.ContentValues;
 import android.content.Context;

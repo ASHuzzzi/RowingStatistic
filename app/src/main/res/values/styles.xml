@@ -1,5 +1,4 @@
 <resources>
-
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
@@ -10,14 +9,6 @@
 
     <style name="AppTheme.Launcher" parent="AppTheme">
         <item name="android:windowBackground">@drawable/splash_screen</item>
-    </style>
-    
-    <style name="CaptionText" parent="TextAppearance.AppCompat.Medium">
-        <item name="android:textColor">@color/colorBlack</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textSize">@dimen/txt_size_12</item>
-        <item name="android:gravity">center</item>
-        <item name="android:paddingTop">10dp</item>
     </style>
 
     <style name="TV_for_Old_Name">

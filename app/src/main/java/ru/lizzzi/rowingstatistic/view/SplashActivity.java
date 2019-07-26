@@ -1,4 +1,4 @@
-package ru.lizzzi.rowingstatistic;
+package ru.lizzzi.rowingstatistic.view;
 
 import android.content.Intent;
 import android.os.Bundle;
