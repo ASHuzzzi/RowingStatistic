@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -32,30 +31,29 @@ import ru.lizzzi.rowingstatistic.model.ViewModelMain;
 public class MainActivity extends AppCompatActivity {
 
     public static final int NUMBER_OF_REQUEST = 23401;
-    public final String FILE_IS_LOADING = "Load";
+    private final String FILE_IS_LOADING = "Load";
+    private final String BUNDLE_KEY = "rowers";
 
     private RadioButton radioButtonDistance;
     private RadioButton radioButtonTime;
-    private String loadedFile;
     private RecyclerView recyclerView;
     private Adapter adapter;
     private ArrayList<String> rowers = new ArrayList<>();
     private int MAX_OPEN_FILE = 8;
     private ViewModelMain model;
-    private LiveData<List<String>> liveData;
 
     @Override
     protected void onSaveInstanceState(Bundle bundle) {
         super.onSaveInstanceState(bundle);
         if (rowers.size() > 0) {
-            bundle.putStringArrayList("rowers", rowers);
+            bundle.putStringArrayList(BUNDLE_KEY, rowers);
         }
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        rowers = savedInstanceState.getStringArrayList("rowers");
+        rowers = savedInstanceState.getStringArrayList(BUNDLE_KEY);
     }
 
     @Override
@@ -85,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         buttonFileExplorer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                if (rowers.size() < MAX_OPEN_FILE) { //проверка на макисмальное количество файлов
+                if (rowers.size() < MAX_OPEN_FILE) {
                     final OpenFileDialog fileDialog = new OpenFileDialog(v.getContext())
                             .setFilter(".*\\.csv")
                             .setOpenDialogListener(new OpenFileDialog.OpenDialogListener() {
@@ -96,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                             });
                     fileDialog.show();
                 } else {
-                    toastShow("Загружено максимальное количество файлов!");
+                    toastShow(getResources().getString(R.string.toastMsgMaxOpenFile));
                 }
             }
         });
@@ -106,8 +104,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (rowers.size() > 0) {
-                    if (rowers.get(rowers.size() - 1).contains(FILE_IS_LOADING)) {
-                        toastShow("Дождитесь окончания загрузки файлов");
+                    if (rowers.contains(FILE_IS_LOADING)) {
+                        toastShow(getResources().getString(R.string.toastMsgWaitDownloadedFile));
                     } else {
                         Intent intent = new Intent(
                                 MainActivity.this,
@@ -115,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(intent);
                     }
                 } else {
-                    toastShow("Вы не загрузили ни один из файлов!");
+                    toastShow(getResources().getString(R.string.toastMsgHaveNotUploadedFiles));
                 }
             }
         });
@@ -123,21 +121,19 @@ public class MainActivity extends AppCompatActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(MainActivity.this);
         recyclerView.setLayoutManager(layoutManager);
         model = ViewModelProviders.of(this).get(ViewModelMain.class);
-        model.clearStorage();
     }
 
     private void fileCheckForReload(String fileName) {
-        if (!fileName.equals(loadedFile)) {
+        if (!model.checkFileLocation(fileName)) {
             getDataRowers(fileName);
         } else {
-            toastShow("Вы выбрали уже загруженный файл");
+            toastShow(getResources().getString(R.string.toastMsgAlreadySelectedFile));
         }
     }
 
     private void getDataRowers(String fileName) {
-        loadedFile = fileName;
         rowers.add(FILE_IS_LOADING);
-        liveData = model.addFileToDownload(fileName);
+        LiveData<List<String>> liveData = model.addFileToDownload(fileName);
         if (rowers.size() == 1) {
             adapter = new Adapter(MainActivity.this, rowers);
             recyclerView.setAdapter(adapter);
@@ -156,18 +152,8 @@ public class MainActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case NUMBER_OF_REQUEST: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-
-                }
-                return;
-            }
-        }
+    private void toastShow(String textToShow) {
+        Toast.makeText(getApplicationContext(), textToShow, Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -219,19 +205,12 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent){
-        //использем этот метод чтобы закрыть активность после возврата с предыдущей
-        if (requestCode == 1234){
-            finish();
-        }
-    }
-
-    private void toastShow(String textToShow) {
-        Toast.makeText(getApplicationContext(), textToShow, Toast.LENGTH_LONG).show();
-    }
-
     public void renameChart(String oldName, String newName) {
         model.renameRowers(oldName, newName);
+    }
+
+    public void removeRower(String rowerName) {
+        rowers = model.removeRowerFromStorage(rowerName);
+        adapter.notifyDataSetChanged();
     }
 }

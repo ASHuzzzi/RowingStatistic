@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -27,12 +28,14 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
         private EditText editCaption;
         private ProgressBar progressBar;
         private TextView textCaption;
+        private ImageButton imageDelete;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             editCaption = itemView.findViewById(R.id.editNameRower);
             progressBar = itemView.findViewById(R.id.progressBar);
             textCaption = itemView.findViewById(R.id.textCaption);
+            imageDelete = itemView.findViewById(R.id.imageDelete);
         }
     }
 
@@ -45,15 +48,16 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder viewHolder, int position) {
-        final int newPosition = position + 1;
+        final int positionInAdapter = position;
         String caption =
                 mainActivity.getResources().getString(R.string.chartCaption) +
                 " " +
-                newPosition;
+                (positionInAdapter + 1);
         viewHolder.textCaption.setText(caption);
         if (rowersName.get(position).contains("Load")) {
             viewHolder.progressBar.setVisibility(View.VISIBLE);
             viewHolder.editCaption.setVisibility(View.INVISIBLE);
+            viewHolder.imageDelete.setVisibility(View.GONE);
         } else {
             viewHolder.progressBar.setVisibility(View.GONE);
             viewHolder.editCaption.setText(rowersName.get(position));
@@ -64,11 +68,18 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
                     if ((event.getAction() == KeyEvent.ACTION_DOWN)
                             && (keyCode == KeyEvent.KEYCODE_ENTER)) {
                         mainActivity.renameChart(
-                                rowersName.get(newPosition - 1),
+                                rowersName.get(positionInAdapter),
                                 viewHolder.editCaption.getText().toString());
                         return true;
                     }
                     return false;
+                }
+            });
+            viewHolder.imageDelete.setVisibility(View.VISIBLE);
+            viewHolder.imageDelete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mainActivity.removeRower(rowersName.get(positionInAdapter));
                 }
             });
         }

@@ -63,9 +63,9 @@ public class FileParser {
                         while (lineScanner.hasNext()) {
                             String scannerElement = lineScanner.next();
                             if (scannerIndex == 1) {
-                                             /*
-                                            Берем время начала тренировки. Ниже берем именно время, отрезая дату
-                                             */
+                                /*
+                                 * Берем время начала тренировки. Ниже берем именно время, отрезая дату
+                                 */
                                 SimpleDateFormat timeFormat =
                                         new SimpleDateFormat("HH:mm", Locale.getDefault());
                                 timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -131,6 +131,11 @@ public class FileParser {
                         row.put("speed", speed);
                         row.put("strokeRate", strokeRate);
                         row.put("power", power);
+                        if (lineInFile == 3) {
+                            row.put("fileLocation", fileLocation);
+                        } else {
+                            row.put("fileLocation", "");
+                        }
                         listForDB.add(row);
                     }
                     lineInFile++;

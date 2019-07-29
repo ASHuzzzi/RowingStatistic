@@ -34,7 +34,8 @@ public class SQLiteStorage extends SQLiteOpenHelper {
                 + RowerData.COLUMN_TIME + " INTEGER NOT NULL, "
                 + RowerData.COLUMN_SPEED + " REAL NOT NULL, "
                 + RowerData.COLUMN_STROKE_RATE + " INTEGER NOT NULL, "
-                + RowerData.COLUMN_POWER + " INTEGER NOT NULL);";
+                + RowerData.COLUMN_POWER + " INTEGER NOT NULL, "
+                + RowerData.COLUMN_FILE_LOCATION + " TEXT);";
         db.execSQL(SQL_CREATE_ROWER_TABLE);
     }
 
@@ -70,9 +71,11 @@ public class SQLiteStorage extends SQLiteOpenHelper {
             values.put(
                     RowerData.COLUMN_POWER,
                     Integer.valueOf(dataForSave.get(i).get("power").toString()));
+            values.put(
+                    RowerData.COLUMN_FILE_LOCATION,
+                    dataForSave.get(i).get("fileLocation").toString());
             database.insert(RowerData.TABLE_NAME, null, values);
         }
-        database.close();
     }
 
     public float getMaxSpeed() {
@@ -120,7 +123,6 @@ public class SQLiteStorage extends SQLiteOpenHelper {
             result = cursor.getInt(0);
             cursor.close();
         }
-        database.close();
         return result;
     }
 
@@ -141,7 +143,6 @@ public class SQLiteStorage extends SQLiteOpenHelper {
             result = cursor.getInt(0);
             cursor.close();
         }
-        database.close();
         return result;
     }
 
@@ -169,7 +170,6 @@ public class SQLiteStorage extends SQLiteOpenHelper {
             result = cursor.getDouble(cursor.getColumnIndex(RowerData.COLUMN_TIME));
             cursor.close();
         }
-        database.close();
         return result;
     }
 
@@ -197,7 +197,6 @@ public class SQLiteStorage extends SQLiteOpenHelper {
             result = cursor.getDouble(cursor.getColumnIndex(RowerData.COLUMN_DISTANCE));
             cursor.close();
         }
-        database.close();
         return result;
     }
 
@@ -268,7 +267,6 @@ public class SQLiteStorage extends SQLiteOpenHelper {
                 dataForChart.add(1, rowerSpeed);
                 dataForChart.add(2, rowerStrokeRate);
             }
-            database.close();
         }
         return dataForChart;
     }
@@ -304,7 +302,6 @@ public class SQLiteStorage extends SQLiteOpenHelper {
             result = cursor.getFloat(0);
             cursor.close();
         }
-        database.close();
         return result;
     }
 
@@ -343,11 +340,10 @@ public class SQLiteStorage extends SQLiteOpenHelper {
             result = cursor.getFloat(0);
             cursor.close();
         }
-        database.close();
         return result;
     }
 
-    public List<String> getRowerName() {
+    public ArrayList<String> getRowerName() {
         database = this.getReadableDatabase();
         String[] columns = {RowerData.COLUMN_ROWER};
         Cursor cursor = database.query(
@@ -361,14 +357,13 @@ public class SQLiteStorage extends SQLiteOpenHelper {
                 null,
                 null
         );
-        List<String> result = new ArrayList<>();
+        ArrayList<String> result = new ArrayList<>();
         if (cursor != null && cursor.moveToFirst()) {
             do {
                 result.add(cursor.getString(cursor.getColumnIndex(RowerData.COLUMN_ROWER)));
             } while (cursor.moveToNext());
             cursor.close();
         }
-        database.close();
         return result;
     }
 
@@ -381,13 +376,53 @@ public class SQLiteStorage extends SQLiteOpenHelper {
         database.update(RowerData.TABLE_NAME, values, whereClause, selectionArgs);
     }
 
+    public void deleteRower(String rowerName) {
+        database = this.getReadableDatabase();
+        String whereClause = RowerData.COLUMN_ROWER + "=?";
+        String[] selectionArgs = {rowerName};
+        database.delete(RowerData.TABLE_NAME, whereClause, selectionArgs);
+    }
+
+    public boolean checkFileLocation(String fileLocation) {
+        database = this.getReadableDatabase();
+        String[] columns = {RowerData.COLUMN_FILE_LOCATION};
+        String selection =
+                RowerData.COLUMN_FILE_LOCATION +
+                "=?";
+        String[] selectionArgs = {fileLocation};
+        Cursor cursor = database.query(
+                RowerData.TABLE_NAME,
+                columns,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null,
+                null
+        );
+        boolean isFound = false;
+        if (cursor != null && cursor.getCount() > 0) {
+            isFound = true;
+            cursor.close();
+        }
+        return isFound;
+
+    }
+
+    public void closeStorage() {
+        if (database != null) {
+            database.close();
+        }
+    }
+
     public static final class RowerData implements BaseColumns {
         final static String TABLE_NAME = "training";
         final static String COLUMN_ROWER = "rower";
         final static String COLUMN_DISTANCE = "distance";
         final static String COLUMN_TIME = "time";
         final static String COLUMN_SPEED = "speed";
-        final static String COLUMN_STROKE_RATE = "strokerate";
+        final static String COLUMN_STROKE_RATE = "strokeRate";
         final static String COLUMN_POWER = "power";
+        final static String COLUMN_FILE_LOCATION = "fileLocation";
     }
 }

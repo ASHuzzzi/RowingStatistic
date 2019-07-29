@@ -33,8 +33,8 @@ public class ViewModelMain extends AndroidViewModel {
     private SharedPreferences sharedPreferencesCharts;
 
     //файл с полями для запоминания последней открытой папки
-    public static final String APP_PREFERENCES = "lastdir";
-    public static final String APP_PREFERENCES_COUNTER = "counter";
+    private static final String APP_PREFERENCES = "lastdir";
+    private static final String APP_PREFERENCES_COUNTER = "counter";
 
     public ViewModelMain(@NonNull Application application) {
         super(application);
@@ -80,7 +80,7 @@ public class ViewModelMain extends AndroidViewModel {
     }
 
     public ArrayList<String> getRowers() {
-        return rowers;
+        return rowers = sqlStorage.getRowerName();
     }
 
     public void clearStorage() {
@@ -112,5 +112,22 @@ public class ViewModelMain extends AndroidViewModel {
                         APP_PREFERENCES,
                         Context.MODE_PRIVATE);
         sharedPreferences.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
+    }
+
+    public ArrayList<String> removeRowerFromStorage(String rowerName) {
+        sqlStorage.deleteRower(rowerName);
+        rowers.remove(rowerName);
+        numberOfLoadedFiles--;
+        return rowers;
+    }
+
+    public boolean checkFileLocation(String fileLocation) {
+        return sqlStorage.checkFileLocation(fileLocation);
+    }
+
+    @Override
+    public void onCleared(){
+        super.onCleared();
+        sqlStorage.closeStorage();
     }
 }

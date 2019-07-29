@@ -15,21 +15,17 @@
     <string name="enterFileName">Введите имя файла</string>
     <string name="enterCommentForPeriod">Комментарий для периода</string>
 
-    <string name="chart_info">Построить график по:</string>
-    <string name="name_chart">Названия графиков</string>
-    <string name="name_chart1">График 1</string>
-    <string name="name_chart2">График 2</string>
-    <string name="name_chart3">График 3</string>
-    <string name="name_chart4">График 4</string>
-    <string name="name_chart5">График 5</string>
-    <string name="name_chart6">График 6</string>
-    <string name="name_chart7">График 7</string>
-    <string name="name_chart8">График 8</string>
-    <string name="build_chart">Построить график</string>
+    <string name="chartInfo">Построить график по:</string>
+    <string name="chartName">Названия графиков</string>
+    <string name="chartBuild">Построить график</string>
     <string name="emptyText"> </string>
 
     <string name="open">Открыть</string>
 
     <string name="chartCaption">График </string>
+    <string name="toastMsgMaxOpenFile">Загружено максимальное количество файлов!</string>
+    <string name="toastMsgWaitDownloadedFile">Дождитесь окончания загрузки файлов</string>
+    <string name="toastMsgHaveNotUploadedFiles">Вы не загрузили ни один из файлов!</string>
+    <string name="toastMsgAlreadySelectedFile">Вы выбрали уже загруженный файл</string>
 
 </resources>

@@ -26,7 +26,7 @@
             android:id="@+id/textView3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/chart_info"
+            android:text="@string/chartInfo"
             android:layout_below="@id/buttonFileExplorer"
             android:textColor="@color/colorBlack"
             android:gravity="center_horizontal"
@@ -73,7 +73,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/radioGroup"
             android:background="@android:drawable/btn_default"
-            android:text="@string/build_chart"
+            android:text="@string/chartBuild"
             android:textSize="@dimen/txt_size_14"
             tools:ignore="ButtonStyle" />
     </RelativeLayout>

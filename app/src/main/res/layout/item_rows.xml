@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="5dp">
@@ -18,20 +20,33 @@
             android:layout_marginRight="10dp"
             android:text="@string/chartCaption"
             android:textStyle="bold"
-            android:textColor="@color/colorBlack"/>
+            android:textColor="@color/colorBlack"
+            tools:ignore="RtlHardcoded" />
 
         <EditText
             android:id="@+id/editNameRower"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/textCaption"
+            android:layout_toStartOf="@id/imageDelete"
+            android:layout_toLeftOf="@id/imageDelete"
             android:layout_toEndOf="@id/textCaption"
-            android:ems="10"
-            android:singleLine="true"
+            android:layout_toRightOf="@id/textCaption"
+            android:autofillHints="@string/emptyText"
             android:ellipsize="end"
+            android:ems="10"
             android:inputType="textPersonName"
+            android:singleLine="true"
             android:text="@string/emptyText"
-            android:autofillHints="@string/emptyText" />
+            tools:ignore="RtlHardcoded" />
+
+        <ImageButton
+            android:id="@+id/imageDelete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@android:drawable/ic_menu_close_clear_cancel"
+            android:backgroundTint="@color/colorRed" />
 
         <ProgressBar
             android:id="@+id/progressBar"
@@ -41,7 +56,8 @@
             android:layout_centerInParent="true"
             android:layout_toEndOf="@id/textCaption"
             android:layout_toRightOf="@id/textCaption"
-            android:indeterminate="true"/>
+            android:indeterminate="true"
+            tools:ignore="RtlHardcoded" />
     </RelativeLayout>
 
 </android.support.v7.widget.CardView>

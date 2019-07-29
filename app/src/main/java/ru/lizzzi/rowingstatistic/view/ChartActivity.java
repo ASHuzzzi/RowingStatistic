@@ -508,30 +508,6 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         //служебный метод сгенерированный автоматически
     }
 
-    @Override
-    public void onBackPressed() {
-        openQuitDialog(); //запускает окно Quit Dialog когда нажата кнопка назад
-    }
-
-    private void openQuitDialog() {
-        AlertDialog.Builder quitDialog = new AlertDialog.Builder(
-                ChartActivity.this);
-        quitDialog.setTitle("Закрыть приложение?");
-        quitDialog.setPositiveButton("Да", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-            }
-        });
-        quitDialog.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-            }
-        });
-
-        quitDialog.show();
-    }
-
     public void writeInFile(View v) { //запись в файл
 
         if (dataForSaveInFile.length() > 1) { //проверяем чтобы строка была не пустая
