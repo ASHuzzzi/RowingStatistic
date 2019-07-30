@@ -15,42 +15,70 @@ import ru.lizzzi.rowingstatistic.data.SQLiteStorage;
 public class ViewModelChart extends AndroidViewModel {
     private SQLiteStorage sqlStorage;
     //файл с полями для запоминания последней открытой папки
-    public static final String APP_PREFERENCES = "lastdir";
-    public static final String APP_PREFERENCES_COUNTER = "counter";
-    public static final String APP_PREFERENCES_DIR = "dir";
-    private SharedPreferences sharedPreferencesForSettings;
+    private static final String APP_PREFERENCES = "lastdir";
+    private static final String APP_PREFERENCES_COUNTER = "counter";
+
+    //файл для сохранения настоек для построения графиков
+    private static final String APP_PREFERENCES_Chart = "chart_settings";
+    private static final String APP_PREFERENCES_TYPE_CHART = "type_chart";
+    private SharedPreferences sharedPreferencesCharts;
+
+    private int typeOfMeasurement;
+    private int TIME = 0;
+    private int DISTANCE = 1;
+    private float maxSpeed;
+    private int maxPower;
+    private float maxStrokeRate;
+    private float minValueForCharts;
+    private float maxValueForCharts;
 
     public ViewModelChart(@NonNull Application application) {
         super(application);
         sqlStorage = new SQLiteStorage(getApplication().getApplicationContext());
+        sharedPreferencesCharts = getApplication().getApplicationContext().getSharedPreferences(
+                APP_PREFERENCES_Chart,
+                Context.MODE_PRIVATE);
+        typeOfMeasurement = sharedPreferencesCharts.getInt(APP_PREFERENCES_TYPE_CHART, 1);
+        getBoundaryValues(showByTime());
+        maxPower = getMaxPower();
+        maxSpeed = getMaxSpeed();
+        maxStrokeRate = getMaxStrokeRate();
     }
 
-    public int getMaxPower() {
+    private int getMaxPower() {
         return sqlStorage.getMaxPower();
     }
 
-    public float getMaxSpeed() {
+    private float getMaxSpeed() {
         return sqlStorage.getMaxSpeed();
     }
 
-    public float getMaxTime() {
+    private float getMaxTime() {
         return  sqlStorage.getMaxTime();
     }
 
-    public float getMinTime() {
+    private float getMinTime() {
         return sqlStorage.getMinTime();
     }
 
-    public float getMaxDistance() {
+    private float getMaxDistance() {
         return sqlStorage.getMaxDistance();
     }
 
-    public float getMaxStrokeRate() {
+    private float getMaxStrokeRate() {
         return sqlStorage.getMaxStrokeRate();
     }
 
     public ArrayList<String> getRowerName() {
         return sqlStorage.getRowerName();
+    }
+
+    public float getMinValueForCharts() {
+        return minValueForCharts;
+    }
+
+    public float getMaxValueForCharts() {
+        return  maxValueForCharts;
     }
 
     public float getAverageTime(int rower, float startPeriod, float endPeriod) {
@@ -61,18 +89,12 @@ public class ViewModelChart extends AndroidViewModel {
         return sqlStorage.getAverageDistance(rower, startPeriod, endPeriod);
     }
 
-    public List<List<Entry>> getDataFotDrawing(
-            String rowerName,
-            int rowerPosition,
-            int maxPower,
-            int timeOrDistance,
-            float maxSpeed,
-            float maxStrokeRate) {
+    public List<List<Entry>> getDataFotDrawing(String rowerName, int rowerPosition) {
       return sqlStorage.getDataFotDrawing(
               rowerName,
               rowerPosition,
               maxPower,
-              timeOrDistance,
+              typeOfMeasurement,
               maxSpeed,
               maxStrokeRate);
     }
@@ -92,6 +114,24 @@ public class ViewModelChart extends AndroidViewModel {
                         APP_PREFERENCES,
                         Context.MODE_PRIVATE);
         sharedPreferences.edit().putInt(APP_PREFERENCES_COUNTER, 0).apply();
+    }
+
+    public boolean showByTime() {
+        return typeOfMeasurement == TIME;
+    }
+
+    public void setShowByTime(Boolean showByTime) {
+        typeOfMeasurement = (showByTime) ? TIME : DISTANCE;
+        sharedPreferencesCharts.edit().putInt(
+                APP_PREFERENCES_TYPE_CHART,
+                typeOfMeasurement
+        ).apply();
+        getBoundaryValues(showByTime);
+    }
+
+    private void getBoundaryValues(Boolean showByTime) {
+        minValueForCharts = (showByTime) ? getMinTime() : 0;
+        maxValueForCharts = (showByTime) ? getMaxTime() : getMaxDistance();
     }
 
     @Override

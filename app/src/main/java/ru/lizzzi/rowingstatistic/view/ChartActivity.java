@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Matrix;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.LayoutInflater;
@@ -15,6 +14,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,7 +45,6 @@ import ru.lizzzi.rowingstatistic.charts.listener.OnChartGestureListener;
 import ru.lizzzi.rowingstatistic.charts.listener.OnChartValueSelectedListener;
 import ru.lizzzi.rowingstatistic.charts.notimportant.DemoBase;
 import ru.lizzzi.rowingstatistic.charts.utils.ColorTemplate;
-import ru.lizzzi.rowingstatistic.data.SQLiteStorage;
 import ru.lizzzi.rowingstatistic.model.ViewModelChart;
 
 public class ChartActivity extends DemoBase implements OnChartValueSelectedListener {
@@ -55,25 +54,16 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     public static final String APP_PREFERENCES_DIR = "dir";
     private SharedPreferences sharedPreferencesForSettings;
 
-    //файл для сохранения настоек для построения графиков
-    public static final String APP_PREFERENCES_Chart = "chart_settings";
-    public static final String APP_PREFERENCES_TYPE_CHART = "type_chart";
-    private SharedPreferences sharedPreferencesForCharts;
-
     //графики и массивы для них
     private LineChart chartUp;
     private LineChart chartDown;
     private ArrayList<ILineDataSet> dataSetsUp = new ArrayList<>();
     private ArrayList<ILineDataSet> dataSetsDown = new ArrayList<>();
 
-    private int timeOrDistance = 1; //тображение по х времени иди дистаниции. 0 и 1 соотвественно
     private int beginSampleUp = 0; //ссылка в массиве на начало отрезка выборки
     private int endSampleUp = 0; // ссылка в массиве на конец отрезка выборки
     private int beginSampleDown = 0; //ссылка в массиве на начало отрезка выборки
     private int endSampleDown = 0; // ссылка в массиве на конец отрезка выборки
-    private float maxSpeed = 0; //максимальное значение по у для графика скорость/динамика
-    private int maxPower = 0; //максимальное значение по у для графика для гребцов
-    private float maxStrokeRate = 0;
     private double tapPoint = 0;
     private int counterPeriod = 0;
 
@@ -82,18 +72,14 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     private float ramBegin = -1;
     private float ramEnd = 0;
 
-    private Button buttonTime;
-    private Button buttonDistance;
+    private RadioButton radioButtonDistance;
+    private RadioButton radioButtonTime;
     private Button buttonSampleStart;
     private Button buttonSampleEnd;
     private Button buttonProcessSample;
     private Button buttonWriteInFile;
     private List<String> chartName = new ArrayList<>();
     private ViewModelChart viewModel;
-    private float minValueForCharts;
-    private float maxValueForCharts;
-    int TIME = 0;
-    int DISTANCE = 1;
 
     private int[] colorsForSample = new int[]{
             ColorTemplate.COLORFUL_COLORS[0],
@@ -108,28 +94,28 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.chart_main);
 
-        buttonSampleStart = findViewById(R.id.button15);
+        buttonSampleStart = findViewById(R.id.buttonSampleStart);
         buttonSampleStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                beginSampleClick(view);
+                beginSampleClick();
             }
         });
-        buttonSampleEnd = findViewById(R.id.button14);
+        buttonSampleEnd = findViewById(R.id.buttonSampleEnd);
         buttonSampleEnd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                endSampleClick(view);
+                endSampleClick();
             }
         });
-        buttonProcessSample = findViewById(R.id.button13);
+        buttonProcessSample = findViewById(R.id.buttonProcessSample);
         buttonProcessSample.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 editPeriod(view);
             }
         });
-        buttonWriteInFile = findViewById(R.id.button6);
+        buttonWriteInFile = findViewById(R.id.buttonWriteInFile);
         buttonWriteInFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -138,22 +124,18 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         });
 
         //показываем, выделением кнопок, по каким величинам построена ось абсцисс
-        buttonTime = findViewById(R.id.buttonTime);
-        buttonTime.setOnClickListener(new View.OnClickListener() {
+        radioButtonTime = findViewById(R.id.radioTime);
+        radioButtonTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sharedPreferencesForCharts.edit().putInt(APP_PREFERENCES_TYPE_CHART, 0).apply();
-                ButtonSelect(buttonTime);
-                ButtonNoNSelect(buttonDistance);
+                setShowByTime(true);
             }
         });
-        buttonDistance = findViewById(R.id.buttonDistance);
-        buttonDistance.setOnClickListener(new View.OnClickListener() {
+        radioButtonDistance = findViewById(R.id.radioDistance);
+        radioButtonDistance.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sharedPreferencesForCharts.edit().putInt(APP_PREFERENCES_TYPE_CHART, 1).apply();
-                ButtonSelect(buttonDistance);
-                ButtonNoNSelect(buttonTime);
+                setShowByTime(false);
             }
         });
 
@@ -165,25 +147,12 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     @Override
     public void onStart() {
         super.onStart();
-        //получаем значения из файла chart_settings
-        sharedPreferencesForCharts =
-                this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-        timeOrDistance = (sharedPreferencesForCharts.getInt(APP_PREFERENCES_TYPE_CHART, 0));
-        maxPower = viewModel.getMaxPower();
-        maxSpeed = viewModel.getMaxSpeed();
-        maxStrokeRate = viewModel.getMaxStrokeRate();
         chartName = viewModel.getRowerName();
         showCharts();  //строим графики
-        if (timeOrDistance == TIME) {
-            ButtonSelect(buttonTime);
-            ButtonNoNSelect(buttonDistance);
-            minValueForCharts = viewModel.getMinTime();
-            maxValueForCharts = viewModel.getMaxTime();
+        if (viewModel.showByTime()) {
+            radioButtonTime.setChecked(true);
         } else {
-            ButtonSelect(buttonDistance);
-            ButtonNoNSelect(buttonTime);
-            minValueForCharts = 0;
-            maxValueForCharts = viewModel.getMaxDistance();
+            radioButtonDistance.setChecked(true);
         }
     }
 
@@ -193,8 +162,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         viewModel.clearLastOpenDirectory();
     }
 
-
-    public void beginSampleClick(View view) { //метод выбора начало выборки
+    public void beginSampleClick() { //метод выбора начало выборки
         /*
         алгоритм:
         проверяем что у нас по оси абсцисс - время или дистанция
@@ -203,9 +171,8 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
         для времени и дистанции все кроме проверки граничных условий совпадает по алгоритму
          */
-
         if (tapPoint >= 0) {
-            if (tapPoint < minValueForCharts || tapPoint > maxValueForCharts) {
+            if (tapPoint < viewModel.getMinValueForCharts() || tapPoint > viewModel.getMaxValueForCharts()) {
                 Toast.makeText(
                         getApplicationContext(),
                         "Значение вне доступного периода",
@@ -222,8 +189,8 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                     // граница строится как график
                     // заполняем массив для еще одного графика
                     ramBegin = (float) tapPoint;
-                    ArrayList<Entry> values_up = new ArrayList<Entry>();
-                    ArrayList<Entry> values_down = new ArrayList<Entry>();
+                    ArrayList<Entry> values_up = new ArrayList<>();
+                    ArrayList<Entry> values_down = new ArrayList<>();
                     values_up.add(new Entry(ramBegin, 0));
                     values_up.add(new Entry(ramBegin, 1));
 
@@ -263,7 +230,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         }
     }
 
-    public void endSampleClick(View view) { //метод выбора конца выборки
+    public void endSampleClick() { //метод выбора конца выборки
         /*
         алгоритм:
         проверяем что у нас по оси абсцисс - время или дистанция
@@ -276,7 +243,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
          */
 
         if (tapPoint > 0) {
-            if (tapPoint < minValueForCharts || tapPoint > maxValueForCharts) {
+            if (tapPoint < viewModel.getMinValueForCharts() || tapPoint > viewModel.getMaxValueForCharts()) {
                 Toast.makeText(
                         getApplicationContext(),
                         "Значение вне доступного периода",
@@ -291,8 +258,8 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                     ).show();
                 } else {
                     ramEnd = (float) tapPoint;
-                    ArrayList<Entry> values_up = new ArrayList<Entry>();
-                    ArrayList<Entry> values_down = new ArrayList<Entry>();
+                    ArrayList<Entry> values_up = new ArrayList<>();
+                    ArrayList<Entry> values_down = new ArrayList<>();
                     values_up.add(new Entry(ramEnd, 0));
                     values_up.add(new Entry(ramEnd, 1));
 
@@ -335,8 +302,6 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     public void editPeriod(View view) { //метод обработки выборки
 
         if (ramBegin > -1 && ramEnd > 0) { //проверка на наличие начала и конца выборки
-            final SQLiteStorage mDBHelper = new SQLiteStorage(this);
-
             //сначала создаем поле для ввода комментария
             LayoutInflater li = LayoutInflater.from(this);
             final View promptsView = li.inflate(R.layout.comment_for_result, null);
@@ -359,7 +324,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                                     dataForSaveInFile = dataForSaveInFile + (counterPeriod + 1) + ";";
                                     //цикл для взятия среднего значения
                                     for (int rower = 0; rower < chartName.size(); rower++) { //для каждого пловца
-                                        float average = (timeOrDistance == TIME)
+                                        float average = (viewModel.showByTime())
                                                 ? viewModel.getAverageTime(rower, ramBegin, ramEnd)
                                                 : viewModel.getAverageDistance(rower, ramBegin, ramEnd);
                                         dataForSaveInFile = dataForSaveInFile + average + ";";
@@ -419,7 +384,6 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     }
 
     public void writeInFile(View v) { //запись в файл
-
         if (dataForSaveInFile.length() > 1) { //проверяем чтобы строка была не пустая
             LayoutInflater li = LayoutInflater.from(this);
             final View promptsView = li.inflate(R.layout.result_filename, null);
@@ -467,7 +431,11 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                                     }
                                     firstRow = firstRow + "Комментарий" + "\n";
 
-                                    sharedPreferencesForSettings = getApplicationContext().getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+                                    sharedPreferencesForSettings =
+                                            getApplicationContext().getSharedPreferences(
+                                                    APP_PREFERENCES,
+                                                    Context.MODE_PRIVATE
+                                            );
                                     String nameSavedFile;
                                     if (userInput.length() > 0) {
                                         nameSavedFile = userInput.getText().toString() + ".csv";
@@ -564,63 +532,23 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         }
     }
 
-    public void changeOnTime(View view) { //метод смены графика с дистанции на время
-
-        sharedPreferencesForCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferencesForCharts.edit();
-        editor.putString(APP_PREFERENCES_TYPE_CHART, "0");
-        editor.apply();
-
-        ButtonNoNSelect(buttonDistance);
-        ButtonSelect(buttonTime);
-
-
+    private void setShowByTime(Boolean showByTime) {
+        viewModel.setShowByTime(showByTime);
         dataSetsDown.clear();
         dataSetsUp.clear();
         beginSampleUp = 0;
         beginSampleDown = 0;
         endSampleUp = 0;
         endSampleDown = 0;
-        timeOrDistance = TIME;
-        showCharts();
-        if (ramBegin != -1) {
-            tapPoint = (float) findTime(ramBegin);
-            ramEnd = (float) findTime(ramEnd);
-            beginSampleClick(view);
-        }
-        if (ramEnd != 0) {
-            tapPoint = ramEnd;
-            endSampleClick(view);
-        }
-        tapPoint = 0;
-    }
-
-    public void changeOnDistance(View view) { //метод смены графика с времени на дистанцию
-
-        sharedPreferencesForCharts = this.getSharedPreferences(APP_PREFERENCES_Chart, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferencesForCharts.edit();
-        editor.putString(APP_PREFERENCES_TYPE_CHART, "1");
-        editor.apply();
-
-        ButtonNoNSelect(buttonTime);
-        ButtonSelect(buttonDistance);
-
-        dataSetsDown.clear();
-        dataSetsUp.clear();
-        beginSampleUp = 0;
-        beginSampleDown = 0;
-        endSampleUp = 0;
-        endSampleDown = 0;
-        timeOrDistance = DISTANCE;
         showCharts();
         if (ramBegin != -1) {
             tapPoint = (float) findDistance(ramBegin);
             ramEnd = (float) findDistance(ramEnd);
-            beginSampleClick(view);
+            beginSampleClick();
         }
         if (ramEnd != 0) {
             tapPoint = ramEnd;
-            endSampleClick(view);
+            endSampleClick();
         }
         tapPoint = 0;
     }
@@ -661,11 +589,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         for (int rower = 0; rower < chartName.size(); rower++) {
             List<List<Entry>> dataForChart = viewModel.getDataFotDrawing(
                     chartName.get(rower),
-                    rower,
-                    maxPower,
-                    timeOrDistance,
-                    maxSpeed,
-                    maxStrokeRate);
+                    rower);
             if (rower == 0) { //цикл для построения верхних графиков
                 LineDataSet lineDataSetUp = new LineDataSet(dataForChart.get(1), "Скорость");
                 lineDataSetUp.setLineWidth(LINE_WIDTH);
@@ -710,7 +634,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         view.getAxisRight().setDrawGridLines(false);
         view.getXAxis().setDrawAxisLine(false);
         view.getXAxis().setDrawGridLines(false);
-        if (timeOrDistance == TIME) {
+        if (viewModel.showByTime()) {
             view.getXAxis().setValueFormatter(new HourAxisValueFormatter(0));
         } else {
             view.getXAxis().setValueFormatter(new DefaultAxisValueFormatter(0));
@@ -798,7 +722,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         if (ramBegin != -1 && ramEnd != 0) { //если зафиксирована выборка
             double start;
             double end;
-            if (timeOrDistance == TIME) {
+            if (viewModel.showByTime()) {
                 start = findDistance(ramBegin);
                 end = findDistance(ramEnd);
                 correctDistance = end - start;
@@ -814,7 +738,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
             }
         } else { //если выборки нет, показываем значения по тапу на графике
             if (tapPoint > 0) {
-                if (timeOrDistance == TIME) {
+                if (viewModel.showByTime()) {
                     correctDistance = findDistance(tapPoint);
                     correctTime = findTime(correctDistance);
                 } else {
@@ -842,15 +766,5 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
     private double findDistance(double point) { //метод поиска дистанции по времени
         return viewModel.getDistance(point);
-    }
-
-    private void ButtonSelect(Button button){ //метод выбора кнопки
-        button.setTextColor(getResources().getColor(R.color.colorPrimary));
-        button.setTypeface(null, Typeface.BOLD);
-    }
-
-    private void ButtonNoNSelect(Button button){ //метод снятия выбора с кнопки
-        button.setTextColor(getResources().getColor(R.color.colorBlack));
-        button.setTypeface(null, Typeface.NORMAL);
     }
 }

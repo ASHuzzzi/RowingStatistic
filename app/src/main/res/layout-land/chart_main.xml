@@ -6,122 +6,132 @@
     android:layout_height="match_parent"
     android:background="@color/colorWhite"
     android:orientation="horizontal"
-    tools:ignore="DisableBaselineAlignment">
+    android:padding="10dp">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="3"
-        android:orientation="vertical"
-        android:paddingTop="5dp">
+        android:orientation="vertical">
 
         <Button
-            android:id="@+id/button15"
+            android:id="@+id/buttonSampleStart"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/width30"
-            android:background="@android:drawable/btn_default"
-            android:text="@string/start_sampling"
-            android:textSize="@dimen/txt_size_12" />
+            android:layout_height="wrap_content"
+            android:text="@string/start_sampling" />
 
         <Button
-            android:id="@+id/button14"
+            android:id="@+id/buttonSampleEnd"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/width30"
-            android:background="@android:drawable/btn_default"
-            android:text="@string/finish_sampling"
-            android:textSize="@dimen/txt_size_12" />
+            android:layout_height="wrap_content"
+            android:layout_below="@id/buttonSampleStart"
+            android:text="@string/finish_sampling" />
 
         <Button
-            android:id="@+id/button13"
+            android:id="@+id/buttonProcessSample"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/width30"
-            android:background="@android:drawable/btn_default"
-            android:text="@string/process"
-            android:textSize="@dimen/txt_size_12" />
+            android:layout_height="wrap_content"
+            android:layout_below="@id/buttonSampleEnd"
+            android:text="@string/process" />
 
         <Button
-            android:id="@+id/button6"
+            android:id="@+id/buttonWriteInFile"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/width30"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentStart="true"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/buttonProcessSample"
             android:layout_gravity="bottom"
-            android:background="@android:drawable/btn_default"
-            android:text="@string/save_file"
-            android:textSize="@dimen/txt_size_12"
-            tools:ignore="ObsoleteLayoutParam" />
+            android:text="@string/save_file" />
 
         <TextView
             android:id="@+id/textView4"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/buttonWriteInFile"
             android:text="@string/sampll"
             android:textColor="@color/colorBlack"
             android:gravity="center_horizontal"
             android:textStyle="bold"/>
 
         <LinearLayout
+            android:id="@+id/line1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/textView4"
             android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/timesample"
-                style="@style/TV_for_Old_Name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/emptyText" />
+                android:text="@string/emptyText"
+                android:textColor="@color/colorBlack"
+                android:textStyle="bold"
+                android:gravity="center_horizontal"/>
 
             <TextView
                 android:id="@+id/distancesample"
-                style="@style/TV_for_Old_Name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/emptyText" />
+                android:text="@string/emptyText"
+                android:textColor="@color/colorBlack"
+                android:textStyle="bold"
+                android:gravity="center_horizontal"/>
         </LinearLayout>
 
         <TextView
             android:id="@+id/textView8"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/line1"
             android:text="@string/sampl"
             android:textColor="@color/colorBlack"
             android:gravity="center_horizontal"
             android:textStyle="bold"/>
 
-        <LinearLayout
+        <RadioGroup
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:orientation="vertical">
+            android:layout_below="@id/textView8">
 
-            <Button
-                android:id="@+id/buttonTime"
+            <RadioButton
+                android:id="@+id/radioTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
                 android:layout_weight="1"
-                android:background="@android:drawable/btn_default"
-                android:onClick="changeOnTime"
                 android:text="@string/time"
-                android:textSize="12sp"
-                tools:ignore="ButtonStyle,SmallSp" />
+                android:layoutDirection="rtl"
+                android:textAlignment="textStart"
+                android:layout_gravity="start"
+                tools:ignore="RtlHardcoded" />
 
-            <Button
-                android:id="@+id/buttonDistance"
+            <RadioButton
+                android:id="@+id/radioDistance"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:layout_marginEnd="5dp"
                 android:layout_weight="1"
-                android:background="@android:drawable/btn_default"
-                android:onClick="changeOnDistance"
                 android:text="@string/distance"
-                android:textSize="12sp"
-                tools:ignore="ButtonStyle,SmallSp" />
+                android:layoutDirection="rtl"
+                android:textAlignment="textStart"
+                android:layout_gravity="start"
+                tools:ignore="RtlHardcoded" />
+        </RadioGroup>
 
-        </LinearLayout>
+    </RelativeLayout>
 
-    </LinearLayout>
+    <View
+        android:layout_width="2dp"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimary"
+        android:layout_margin="5dp">
+
+    </View>
 
     <LinearLayout
         android:layout_width="match_parent"
