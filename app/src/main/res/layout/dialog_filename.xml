@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/layout_root"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="10dp" >
 
     <TextView
-        android:id="@+id/tv"
+        android:id="@+id/textCaption"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -17,13 +16,10 @@
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <EditText
-        android:id="@+id/input_text"
+        android:id="@+id/editFileName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"
-        tools:ignore="LabelFor,TextFields">
-
-        <requestFocus />
+        android:inputType="text">
     </EditText>
 
 </LinearLayout>

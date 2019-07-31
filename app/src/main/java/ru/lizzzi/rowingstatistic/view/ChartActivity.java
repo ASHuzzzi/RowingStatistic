@@ -1,30 +1,19 @@
 package ru.lizzzi.rowingstatistic.view;
 
-import android.app.AlertDialog;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.graphics.Matrix;
 import android.os.Bundle;
-import android.os.Environment;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -45,14 +34,11 @@ import ru.lizzzi.rowingstatistic.charts.listener.OnChartGestureListener;
 import ru.lizzzi.rowingstatistic.charts.listener.OnChartValueSelectedListener;
 import ru.lizzzi.rowingstatistic.charts.notimportant.DemoBase;
 import ru.lizzzi.rowingstatistic.charts.utils.ColorTemplate;
+import ru.lizzzi.rowingstatistic.dialogs.CommentDialog;
+import ru.lizzzi.rowingstatistic.dialogs.FileNameDialog;
 import ru.lizzzi.rowingstatistic.model.ViewModelChart;
 
 public class ChartActivity extends DemoBase implements OnChartValueSelectedListener {
-
-    //файл с полями для запоминания последней открытой папки
-    public static final String APP_PREFERENCES = "lastdir";
-    public static final String APP_PREFERENCES_DIR = "dir";
-    private SharedPreferences sharedPreferencesForSettings;
 
     //графики и массивы для них
     private LineChart chartUp;
@@ -65,7 +51,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     private int beginSampleDown = 0; //ссылка в массиве на начало отрезка выборки
     private int endSampleDown = 0; // ссылка в массиве на конец отрезка выборки
     private double tapPoint = 0;
-    private int counterPeriod = 0;
+    private int sampleCounter = 0;
 
     private String dataForSaveInFile = "";
 
@@ -74,14 +60,9 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
 
     private RadioButton radioButtonDistance;
     private RadioButton radioButtonTime;
-    private Button buttonSampleStart;
-    private Button buttonSampleEnd;
-    private Button buttonProcessSample;
-    private Button buttonWriteInFile;
-    private List<String> chartName = new ArrayList<>();
     private ViewModelChart viewModel;
 
-    private int[] colorsForSample = new int[]{
+    private int[] colorsForSample = new int[] {
             ColorTemplate.COLORFUL_COLORS[0],
             ColorTemplate.COLORFUL_COLORS[1]
     };
@@ -94,28 +75,28 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.chart_main);
 
-        buttonSampleStart = findViewById(R.id.buttonSampleStart);
+        Button buttonSampleStart = findViewById(R.id.buttonSampleStart);
         buttonSampleStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 beginSampleClick();
             }
         });
-        buttonSampleEnd = findViewById(R.id.buttonSampleEnd);
+        Button buttonSampleEnd = findViewById(R.id.buttonSampleEnd);
         buttonSampleEnd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 endSampleClick();
             }
         });
-        buttonProcessSample = findViewById(R.id.buttonProcessSample);
+        Button buttonProcessSample = findViewById(R.id.buttonProcessSample);
         buttonProcessSample.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 editPeriod(view);
             }
         });
-        buttonWriteInFile = findViewById(R.id.buttonWriteInFile);
+        Button buttonWriteInFile = findViewById(R.id.buttonWriteInFile);
         buttonWriteInFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -147,7 +128,6 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     @Override
     public void onStart() {
         super.onStart();
-        chartName = viewModel.getRowerName();
         showCharts();  //строим графики
         if (viewModel.showByTime()) {
             radioButtonTime.setChecked(true);
@@ -300,69 +280,9 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     }
 
     public void editPeriod(View view) { //метод обработки выборки
-
-        if (ramBegin > -1 && ramEnd > 0) { //проверка на наличие начала и конца выборки
-            //сначала создаем поле для ввода комментария
-            LayoutInflater li = LayoutInflater.from(this);
-            final View promptsView = li.inflate(R.layout.comment_for_result, null);
-
-            //Создаем AlertDialog
-            AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(this);
-
-            //Настраиваем prompt.xml для нашего AlertDialog:
-            mDialogBuilder.setView(promptsView);
-
-            //Настраиваем отображение поля для ввода текста в открытом диалоге:
-            final EditText userInput = promptsView.findViewById(R.id.editText);
-
-            //Настраиваем сообщение в диалоговом окне:
-            mDialogBuilder
-                    .setCancelable(false)
-                    .setPositiveButton("Обработать",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dataForSaveInFile = dataForSaveInFile + (counterPeriod + 1) + ";";
-                                    //цикл для взятия среднего значения
-                                    for (int rower = 0; rower < chartName.size(); rower++) { //для каждого пловца
-                                        float average = (viewModel.showByTime())
-                                                ? viewModel.getAverageTime(rower, ramBegin, ramEnd)
-                                                : viewModel.getAverageDistance(rower, ramBegin, ramEnd);
-                                        dataForSaveInFile = dataForSaveInFile + average + ";";
-                                    }
-                                    dataForSaveInFile =
-                                            dataForSaveInFile + userInput.getText() + "\n"; //добавляем коммент к строке
-                                    ramBegin = -1;
-                                    ramEnd = 0;
-                                    counterPeriod++;
-                                    Toast.makeText(
-                                            getApplicationContext(),
-                                            "Выборка добавлена",
-                                            Toast.LENGTH_SHORT
-                                    ).show();
-                                }
-                            })
-                    .setNegativeButton("Отмена",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                    Toast.makeText(
-                                            getApplicationContext(),
-                                            "Выборка не добавлена!",
-                                            Toast.LENGTH_SHORT
-                                    ).show();
-                                }
-                            });
-
-            //Создаем AlertDialog:
-            AlertDialog alertDialog = mDialogBuilder.create();
-
-            //и отображаем его:
-            alertDialog.show();
-            Button nbutton = alertDialog.getButton(DialogInterface.BUTTON_NEGATIVE);
-            nbutton.setTextColor(getResources().getColor(R.color.colorRed));
-            //nbutton.setGravity(Gravity.LEFT);
-            Button pbutton = alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
-            pbutton.setTextColor(getResources().getColor(R.color.colorGreen));
+        if (ramBegin > -1 && ramEnd > 0) {
+            CommentDialog commentDialog = new CommentDialog();
+            commentDialog.show(getSupportFragmentManager(), null);
         } else {
             Toast.makeText(
                     getApplicationContext(),
@@ -370,6 +290,27 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                     Toast.LENGTH_LONG
             ).show();
         }
+    }
+
+    public void gerAverageValue(String inputComment) {
+        dataForSaveInFile = dataForSaveInFile + (sampleCounter++) + ";";
+        //цикл для взятия среднего значения
+        for (int rower = 0; rower < viewModel.getChartNameSize(); rower++) { //для каждого пловца
+            float average = (viewModel.showByTime())
+                    ? viewModel.getAverageTime(rower, ramBegin, ramEnd)
+                    : viewModel.getAverageDistance(rower, ramBegin, ramEnd);
+            dataForSaveInFile = dataForSaveInFile + average + ";";
+        }
+        dataForSaveInFile =
+                dataForSaveInFile + inputComment + "\n"; //добавляем коммент к строке
+        ramBegin = -1;
+        ramEnd = 0;
+        ;
+        Toast.makeText(
+                getApplicationContext(),
+                "Выборка добавлена",
+                Toast.LENGTH_SHORT
+        ).show();
     }
 
 
@@ -384,151 +325,15 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
     }
 
     public void writeInFile(View v) { //запись в файл
-        if (dataForSaveInFile.length() > 1) { //проверяем чтобы строка была не пустая
-            LayoutInflater li = LayoutInflater.from(this);
-            final View promptsView = li.inflate(R.layout.result_filename, null);
-
-            //Создаем AlertDialog
-            AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(this);
-
-            //Настраиваем prompt.xml для нашего AlertDialog:
-            mDialogBuilder.setView(promptsView);
-
-            //Настраиваем отображение поля для ввода текста в открытом диалоге:
-            final EditText userInput = promptsView.findViewById(R.id.input_text);
-
-            //Настраиваем сообщение в диалоговом окне:
-            mDialogBuilder
-                    .setCancelable(false)
-                    .setPositiveButton("Записать",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-
-                                    String firstRow = "Период;";
-                                    if (chartName.size() > 0) {
-                                        firstRow = firstRow + chartName.get(0) + ";";
-                                    }
-                                    if (chartName.size() > 1) {
-                                        firstRow = firstRow + chartName.get(1) + ";";
-                                    }
-                                    if (chartName.size() > 2) {
-                                        firstRow = firstRow + chartName.get(2) + ";";
-                                    }
-                                    if (chartName.size() > 3) {
-                                        firstRow = firstRow + chartName.get(3) + ";";
-                                    }
-                                    if (chartName.size() > 4) {
-                                        firstRow = firstRow + chartName.get(4) + ";";
-                                    }
-                                    if (chartName.size() > 5) {
-                                        firstRow = firstRow + chartName.get(5) + ";";
-                                    }
-                                    if (chartName.size() > 6) {
-                                        firstRow = firstRow + chartName.get(6) + ";";
-                                    }
-                                    if (chartName.size() > 7) {
-                                        firstRow = firstRow + chartName.get(7) + ";";
-                                    }
-                                    firstRow = firstRow + "Комментарий" + "\n";
-
-                                    sharedPreferencesForSettings =
-                                            getApplicationContext().getSharedPreferences(
-                                                    APP_PREFERENCES,
-                                                    Context.MODE_PRIVATE
-                                            );
-                                    String nameSavedFile;
-                                    if (userInput.length() > 0) {
-                                        nameSavedFile = userInput.getText().toString() + ".csv";
-                                    } else {
-                                        Calendar currentTime = Calendar.getInstance();
-                                        nameSavedFile =
-                                                "Result_" +
-                                                currentTime.get(Calendar.HOUR_OF_DAY) + "-" +
-                                                currentTime.get(Calendar.MINUTE) + "-" +
-                                                currentTime.get(Calendar.SECOND) + ".csv";
-                                    }
-
-                                    String checkDirectory;
-                                    File pathForSave;
-                                    String textForToast;
-                                    //пытаемся сохраниться в папку с исходниками
-                                    try{
-                                        checkDirectory = Environment.getExternalStorageDirectory().getPath();
-                                        if (checkDirectory.equals(sharedPreferencesForSettings.getString(APP_PREFERENCES_DIR, ""))){
-                                            throw new Exception();
-                                        }
-                                        pathForSave = new File(
-                                                sharedPreferencesForSettings.getString(APP_PREFERENCES_DIR, "") +
-                                                "/" +
-                                                nameSavedFile);
-                                        saveFile(pathForSave, firstRow, dataForSaveInFile);
-                                        //пытаемся сохраниться в папку с исходниками
-                                        pathForSave = new File(sharedPreferencesForSettings.getString(APP_PREFERENCES_DIR, "") + "/" + nameSavedFile);
-                                        saveFile(pathForSave, firstRow, dataForSaveInFile);
-                                        textForToast = "Файл сохранен в папку с иcходными файлами!";
-                                    } catch (Exception e) {
-                                        checkDirectory = Environment.getExternalStorageState();
-                                        if (Environment.MEDIA_MOUNTED.equals(checkDirectory)) //проверям доступность внешней памяти
-                                        {
-                                            try { //сохраняем во внешнюю память
-                                                pathForSave = new File(
-                                                        Environment.getExternalStorageDirectory() +
-                                                        "/" +
-                                                        nameSavedFile);
-                                                saveFile(pathForSave, firstRow, dataForSaveInFile);
-                                                textForToast = "Файл сохранен на внешнюю память!";
-                                            } catch (Exception e1) {
-                                                e1.printStackTrace();
-                                                textForToast = "Файл не сохранен!";
-                                            }
-                                        } else {
-                                            try { //сохраняем во внутренню память
-                                                pathForSave = new File(
-                                                        getApplicationContext().getFilesDir() +
-                                                        "/" +
-                                                        nameSavedFile);
-                                                saveFile(pathForSave, firstRow, dataForSaveInFile);
-                                                textForToast = "Файл сохранен в папку приложения!";
-                                            } catch (Exception e2) {
-                                                e2.printStackTrace();
-                                                textForToast = "Файл не сохранен!";
-                                            }
-                                        }
-                                    }
-                                    Toast.makeText(getApplicationContext(), textForToast, Toast.LENGTH_SHORT).show();
-                                    dataForSaveInFile = "";
-                                }
-                            })
-                    .setNegativeButton("Отмена",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                }
-                            });
-
-            //Создаем AlertDialog:
-            AlertDialog alertDialog = mDialogBuilder.create();
-
-            //и отображаем его:
-            alertDialog.show();
-            Button nbutton = alertDialog.getButton(DialogInterface.BUTTON_NEGATIVE);
-            nbutton.setTextColor(getResources().getColor(R.color.colorRed));
-            Button pbutton = alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
-            pbutton.setTextColor(getResources().getColor(R.color.colorGreen));
+        if (dataForSaveInFile.length() > 1) {
+            Bundle bundle = new Bundle();
+            bundle.putStringArrayList("chartName", viewModel.getChartName());
+            bundle.putString("dataForSaveInFile", dataForSaveInFile);
+            FileNameDialog fileNameDialog = new FileNameDialog();
+            fileNameDialog.setArguments(bundle);
+            fileNameDialog.show(getSupportFragmentManager(), null);
         } else {
             Toast.makeText(getApplicationContext(), "Нет данных для сохранения!", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private boolean saveFile(File myFile, String firts_row, String mass_temp) throws IOException {
-        if (myFile.createNewFile()) {
-            FileOutputStream outputStream = new FileOutputStream(myFile);   // После чего создаем поток для записи                 // и производим непосредственно запись
-            outputStream.write(firts_row.getBytes("Cp1251"));
-            outputStream.write(mass_temp.getBytes("Cp1251"));
-            outputStream.close();
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -586,9 +391,9 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
         float LINE_WIDTH = 2.5f;
         float CIRCLE_RADIUS = 6f;
 
-        for (int rower = 0; rower < chartName.size(); rower++) {
+        for (int rower = 0; rower < viewModel.getChartNameSize(); rower++) {
             List<List<Entry>> dataForChart = viewModel.getDataFotDrawing(
-                    chartName.get(rower),
+                    viewModel.getChartName().get(rower),
                     rower);
             if (rower == 0) { //цикл для построения верхних графиков
                 LineDataSet lineDataSetUp = new LineDataSet(dataForChart.get(1), "Скорость");
@@ -609,7 +414,7 @@ public class ChartActivity extends DemoBase implements OnChartValueSelectedListe
                 lineDataSetUp.setCircleColor(color2);
                 dataSetsUp.add(lineDataSetUp);
             }
-            LineDataSet lineDataSetDown = new LineDataSet(dataForChart.get(0), chartName.get(rower));
+            LineDataSet lineDataSetDown = new LineDataSet(dataForChart.get(0), viewModel.getChartName().get(rower));
 
             lineDataSetDown.setLineWidth(LINE_WIDTH);
             lineDataSetDown.setCircleRadius(CIRCLE_RADIUS);

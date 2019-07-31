@@ -31,6 +31,7 @@ public class ViewModelChart extends AndroidViewModel {
     private float maxStrokeRate;
     private float minValueForCharts;
     private float maxValueForCharts;
+    private ArrayList<String> chartName;
 
     public ViewModelChart(@NonNull Application application) {
         super(application);
@@ -43,6 +44,7 @@ public class ViewModelChart extends AndroidViewModel {
         maxPower = getMaxPower();
         maxSpeed = getMaxSpeed();
         maxStrokeRate = getMaxStrokeRate();
+        chartName = getRowerName();
     }
 
     private int getMaxPower() {
@@ -132,6 +134,14 @@ public class ViewModelChart extends AndroidViewModel {
     private void getBoundaryValues(Boolean showByTime) {
         minValueForCharts = (showByTime) ? getMinTime() : 0;
         maxValueForCharts = (showByTime) ? getMaxTime() : getMaxDistance();
+    }
+
+    public ArrayList<String> getChartName() {
+        return chartName;
+    }
+
+    public int getChartNameSize() {
+        return chartName.size();
     }
 
     @Override
